@@ -1,8 +1,6 @@
 import functions.FileHashGenerator;
 import functions.MetadataJsonWriter;
 import functions.MimeTypeDetector;
-
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,10 +9,24 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        Path rawFilesDirectory = Paths.get("rawFiles");
+        if (args.length == 0) {
+            System.out.println("Please provide a file name.");
+            System.out.println("Example: java -cp src Main bonk.mp3");
+            return;
+        }
 
-        if (!Files.exists(rawFilesDirectory)) {
-            System.out.println("rawFiles directory not found.");
+        String inputFileName = args[0];
+
+        Path rawFilesDirectory = Paths.get("rawFiles");
+        Path filePath = rawFilesDirectory.resolve(inputFileName);
+
+        if (!Files.exists(filePath)) {
+            System.out.println("File not found: " + filePath);
+            return;
+        }
+
+        if (!Files.isRegularFile(filePath)) {
+            System.out.println("Provided path is not a file: " + filePath);
             return;
         }
 
@@ -24,58 +36,46 @@ public class Main {
             Files.createDirectories(metadataDirectory);
         }
 
-        // Temporary Arweave URI.
-        // Later these values will be replaced automatically.
         String creatorWallet = "CJrVFRyTRYaA26oBoEKtB7fAyETu1PaBuDUZLSnPL7cG";
+
+        // Temporary Arweave URI.
+        // Later this value will come from automatic Arweave upload.
         String arweaveBaseUri = "https://arweave.net/DEMO_URI/";
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(rawFilesDirectory)) {
+        String fileName = filePath.getFileName().toString();
 
-            for (Path filePath : stream) {
+        String mimeType = MimeTypeDetector.detect(filePath);
+        String category = MimeTypeDetector.getCategory(mimeType);
 
-                if (!Files.isRegularFile(filePath)) {
-                    continue;
-                }
-                
-                String fileName = filePath.getFileName().toString();
+        String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+        String suffix = MimeTypeDetector.getMetadataSuffix(mimeType);
 
-                String mimeType = MimeTypeDetector.detect(filePath);
-                String category = MimeTypeDetector.getCategory(mimeType);
+        String metadataFileName = baseName + suffix + ".json";
 
-                String baseName =
-                        fileName.substring(0, fileName.lastIndexOf('.'));
+        long fileSize = Files.size(filePath);
+        String sha256 = FileHashGenerator.calculateSHA256(filePath);
 
-                String suffix = MimeTypeDetector.getMetadataSuffix(mimeType);
+        String arweaveAssetUri = arweaveBaseUri + fileName;
 
-                String metadataFileName = baseName + suffix + ".json";
+        Path outputPath = metadataDirectory.resolve(metadataFileName);
 
-                long fileSize = Files.size(filePath);
+        MetadataJsonWriter.write(
+                outputPath,
+                fileName,
+                arweaveAssetUri,
+                category,
+                mimeType,
+                fileSize,
+                sha256,
+                creatorWallet
+        );
 
-                String sha256 = FileHashGenerator.calculateSHA256(filePath);
-
-                String arweaveAssetUri = arweaveBaseUri + fileName;
-
-                Path outputPath =
-                        metadataDirectory.resolve(metadataFileName);
-
-                MetadataJsonWriter.write(
-                        outputPath,
-                        fileName,
-                        arweaveAssetUri,
-                        category,
-                        mimeType,
-                        fileSize,
-                        sha256,
-                        creatorWallet
-                );
-
-                System.out.println("----------------------------------");
-                System.out.println("Metadata generated successfully.");
-                System.out.println("Original file: " + fileName);
-                System.out.println("Metadata file: " + metadataFileName);
-                System.out.println("MIME type: " + mimeType);
-                System.out.println("SHA-256: " + sha256);
-            }
-        }
+        System.out.println("----------------------------------");
+        System.out.println("Metadata generated successfully.");
+        System.out.println("Original file: " + fileName);
+        System.out.println("Metadata file: " + metadataFileName);
+        System.out.println("MIME type: " + mimeType);
+        System.out.println("SHA-256: " + sha256);
+        System.out.println("Output path: " + outputPath);
     }
 }
