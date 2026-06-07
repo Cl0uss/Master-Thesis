@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+set -eu
+
+cd -- "$(dirname -- "$0")"
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: ./launch [file-name]"
+    echo "Example: ./launch bonk.mp3"
+    exit 1
+fi
+
+mkdir -p out
+
+javac -d out \
+    src/Main.java \
+    src/functions/FileHashGenerator.java \
+    src/functions/MetadataJsonWriter.java \
+    src/functions/MimeTypeDetector.java
+
+java -cp out Main "$1"

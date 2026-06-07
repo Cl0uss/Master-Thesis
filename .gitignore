@@ -3,4 +3,4 @@
 /metadata
 /output
 /out
-/src/Main.class
+/src/**/*.class
