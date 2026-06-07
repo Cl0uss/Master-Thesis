@@ -1,6 +1,7 @@
 import functions.FileHashGenerator;
 import functions.MetadataJsonWriter;
 import functions.MimeTypeDetector;
+import functions.ArWeaveUploader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
