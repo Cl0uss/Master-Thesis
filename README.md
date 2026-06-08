@@ -1,90 +1,88 @@
-# Transmedia Digital Content Metadata Generator
+# Master Thesis – Transmedia Digital Content Metadata Generator
 
-This project is part of the master thesis:
+This project is part of the master's thesis:
 
 > A Blockchain-Based Framework for the Distribution, Ownership, and Monetization of Transmedia Digital Content
 
+The application generates NFT-compatible metadata for digital assets and uploads media files to decentralized storage using Irys.
+
 ## Requirements
 
-- Java 17+ (recommended)
-- Visual Studio Code
-- Extension Pack for Java for VSCode
+* Java 17+
+* Node.js 20+
+* npm
 
-VSCode extension:
+## Installation
 
-https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack
+Install Node.js dependencies:
+
+```bash
+npm install
+```
 
 ## Project Structure
 
 ```text
-MASTER-THESIS/
-├── metadata/
-│   ├── bonkAudio.json
-│   └── memeImage.json
-│
-├── rawFiles/
-│   ├── bonk.mp3
-│   └── meme.jpeg
-│
-├── src/
-│   ├── functions/
-│   │   ├── FileHashGenerator.java
-│   │   ├── MetadataJsonWriter.java
-│   │   └── MimeTypeDetector.java
-│   │
-│   └── Main.java
-│
-└── .vscode/
-      └── launch.json
+metadata/      Generated metadata JSON files
+rawFiles/      Source media files
+src/           Java source code
+upload-to-arweave.ts
 ```
 
-## Running the Project
+## Generate Metadata
 
-The project is configured to run using VSCode launch configurations.
-
-To run the project:
-
-1. Open the project in VSCode
-2. Open `Main.java`
-3. Press `Run` or `F5`
-
-## Selecting the File to Process
-
-The file name is configured inside:
-
-```text
-.vscode/launch.json
-```
-
-Example:
-
-```json
-"args": "bonk.mp3"
-```
-
-If you want to process another file, replace:
-
-```json
-"bonk.mp3"
-```
-
-with the desired file name located inside:
+Place a file inside:
 
 ```text
 rawFiles/
 ```
 
+Run:
+
+```bash
+./launch <filename>
+```
+
 Example:
 
-```json
-"args": "meme.jpeg"
+```bash
+./launch bonk.mp3
+./launch meme.jpeg
+```
+
+Generated metadata will be saved in:
+
+```text
+metadata/
+```
+
+## Upload File to Irys
+
+```bash
+npx tsx upload-to-arweave.ts <filePath> <walletPath>
+```
+
+Example:
+
+```bash
+npx tsx upload-to-arweave.ts rawFiles/bonk.mp3 ~/Desktop/thesis-wallet/thesis-wallet.json
+```
+
+The command returns a permanent Irys URL:
+
+```text
+https://gateway.irys.xyz/<transaction-id>
 ```
 
 ## Current Features
 
-- SHA-256 file hashing
-- MIME type detection
-- Automatic metadata JSON generation
-- Support for audio and image assets
-- Metaplex-compatible metadata structure
-- Creator wallet integration
+* SHA-256 file hashing
+* MIME type detection
+* Automatic metadata generation
+* Audio and image support
+* NFT-compatible metadata structure
+* Solana wallet integration
+* Decentralized file storage through Irys
+
+```
+```

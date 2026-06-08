@@ -1,0 +1,30 @@
+{
+  "name": "master-thesis",
+  "version": "1.0.0",
+  "description": "This project is part of the master thesis:",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cl0uss/Master-Thesis.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Cl0uss/Master-Thesis/issues"
+  },
+  "homepage": "https://github.com/Cl0uss/Master-Thesis#readme",
+  "dependencies": {
+    "@irys/upload": "^0.0.15",
+    "@irys/upload-solana": "^0.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

@@ -3,3 +3,4 @@
 /output
 /out
 /src/**/*.class
+/node_modules
