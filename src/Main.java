@@ -1,7 +1,8 @@
 import functions.FileHashGenerator;
 import functions.MetadataJsonWriter;
 import functions.MimeTypeDetector;
-import functions.ArWeaveUploader;
+import functions.IrysUploader;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,7 +13,7 @@ public class Main {
 
         if (args.length == 0) {
             System.out.println("Please provide a file name.");
-            System.out.println("Example: java -cp src Main bonk.mp3");
+            System.out.println("Example: ./launch bonk.mp3");
             return;
         }
 
@@ -37,11 +38,14 @@ public class Main {
             Files.createDirectories(metadataDirectory);
         }
 
-        String creatorWallet = "CJrVFRyTRYaA26oBoEKtB7fAyETu1PaBuDUZLSnPL7cG";
+        String creatorWallet = "9p2MgiUevA82gaJfAVeizSYD38bVMXiijGFcm8rxUXbS";
 
-        // Temporary Arweave URI.
-        // Later this value will come from automatic Arweave upload.
-        String arweaveBaseUri = "https://arweave.net/DEMO_URI/";
+        Path walletPath = Paths.get(
+                System.getProperty("user.home"),
+                "Desktop",
+                "thesis-wallet",
+                "thesis-wallet.json"
+        );
 
         String fileName = filePath.getFileName().toString();
 
@@ -56,14 +60,15 @@ public class Main {
         long fileSize = Files.size(filePath);
         String sha256 = FileHashGenerator.calculateSHA256(filePath);
 
-        String arweaveAssetUri = arweaveBaseUri + fileName;
+        System.out.println("Uploading file to Irys...");
+        String irysAssetUri = IrysUploader.upload(filePath, walletPath);
 
         Path outputPath = metadataDirectory.resolve(metadataFileName);
 
         MetadataJsonWriter.write(
                 outputPath,
                 fileName,
-                arweaveAssetUri,
+                irysAssetUri,
                 category,
                 mimeType,
                 fileSize,
@@ -71,10 +76,15 @@ public class Main {
                 creatorWallet
         );
 
+        System.out.println("Uploading metadata to Irys...");
+        String irysMetadataUri = IrysUploader.upload(outputPath, walletPath);
+
         System.out.println("----------------------------------");
         System.out.println("Metadata generated successfully.");
         System.out.println("Original file: " + fileName);
+        System.out.println("Asset URI: " + irysAssetUri);
         System.out.println("Metadata file: " + metadataFileName);
+        System.out.println("Metadata URI: " + irysMetadataUri);
         System.out.println("MIME type: " + mimeType);
         System.out.println("SHA-256: " + sha256);
         System.out.println("Output path: " + outputPath);

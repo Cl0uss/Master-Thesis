@@ -16,6 +16,7 @@ javac -d out \
     src/Main.java \
     src/functions/FileHashGenerator.java \
     src/functions/MetadataJsonWriter.java \
-    src/functions/MimeTypeDetector.java
+    src/functions/MimeTypeDetector.java \
+    src/functions/IrysUploader.java
 
 java -cp out Main "$1"
