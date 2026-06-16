@@ -19,7 +19,7 @@ public class MetadataJsonWriter {
 
         String mediaFields;
 
-        if (category.equals("audio")) {
+        if (category.equals("audio") || category.equals("document")) {
             mediaFields = """
                   "image": "%s",
                   "animation_url": "%s",

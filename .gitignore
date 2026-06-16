@@ -5,3 +5,4 @@
 /src/**/*.class
 /node_modules
 saveSmth.txt
+estimateCost.ts

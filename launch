@@ -12,11 +12,6 @@ fi
 
 mkdir -p out
 
-javac -d out \
-    src/Main.java \
-    src/functions/FileHashGenerator.java \
-    src/functions/MetadataJsonWriter.java \
-    src/functions/MimeTypeDetector.java \
-    src/functions/IrysUploader.java
+javac -d out $(find src -name "*.java")
 
 java -cp out Main "$1"

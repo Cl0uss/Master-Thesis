@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import bs58 from "bs58";
 
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
@@ -15,10 +16,12 @@ import {
 async function main(): Promise<void> {
     const metadataUri = process.argv[2];
     const walletPath = process.argv[3];
+    const nftName = process.argv[4] ?? "TMDC NFT";
+    const symbol = process.argv[5] ?? "TMDC";
 
     if (!metadataUri || !walletPath) {
         console.error(
-            "Usage: npx tsx mintNft.ts <metadataUri> <walletPath>"
+            "Usage: npx tsx mintNft.ts <metadataUri> <walletPath> [nftName] [symbol]"
         );
         process.exit(1);
     }
@@ -27,6 +30,7 @@ async function main(): Promise<void> {
         .use(mplTokenMetadata());
 
     const secretKey = JSON.parse(fs.readFileSync(walletPath, "utf8"));
+
     const keypair = umi.eddsa.createKeypairFromSecretKey(
         new Uint8Array(secretKey)
     );
@@ -38,16 +42,17 @@ async function main(): Promise<void> {
 
     const result = await createNft(umi, {
         mint,
-        name: "Bonk Audio NFT",
-        symbol: "TMDC",
+        name: nftName,
+        symbol,
         uri: metadataUri,
         sellerFeeBasisPoints: percentAmount(5),
         isMutable: true
     }).sendAndConfirm(umi);
 
-    console.log("NFT minted successfully.");
-    console.log("Mint address:", mint.publicKey);
-    console.log("Transaction signature:", result.signature);
+    const signature = bs58.encode(result.signature);
+
+    console.log(`MINT_ADDRESS=${mint.publicKey}`);
+    console.log(`TRANSACTION_SIGNATURE=${signature}`);
 }
 
 main().catch((error) => {

@@ -2,6 +2,7 @@ import functions.FileHashGenerator;
 import functions.MetadataJsonWriter;
 import functions.MimeTypeDetector;
 import functions.IrysUploader;
+import functions.NftMinter;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +66,7 @@ public class Main {
 
         String irysCoverUri = null;
 
-        if (category.equals("audio")) {
+        if (category.equals("audio") || category.equals("document")) {
             Path coverPath = rawFilesDirectory
                     .resolve("covers")
                     .resolve(baseName + ".png");
@@ -95,6 +96,16 @@ public class Main {
 
         System.out.println("Uploading metadata to Irys...");
         String irysMetadataUri = IrysUploader.upload(outputPath, walletPath);
+        String nftName = baseName + " NFT";
+        String nftSymbol = "TMDC";
+
+        System.out.println("Minting NFT on Solana...");
+        NftMinter.MintResult mintResult = NftMinter.mint(
+                irysMetadataUri,
+                walletPath,
+                nftName,
+                nftSymbol
+        );
 
         System.out.println("----------------------------------");
         System.out.println("Metadata generated successfully.");
@@ -108,5 +119,8 @@ public class Main {
         System.out.println("MIME type: " + mimeType);
         System.out.println("SHA-256: " + sha256);
         System.out.println("Output path: " + outputPath);
+        System.out.println("NFT Mint Address: " + mintResult.mintAddress());
+        System.out.println("NFT Transaction: " + mintResult.transactionSignature());
+        System.out.println("NFT Explorer: https://explorer.solana.com/address/" + mintResult.mintAddress());
     }
 }

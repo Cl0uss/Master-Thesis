@@ -22,6 +22,8 @@ public class MimeTypeDetector {
             return "audio";
         } else if (mimeType.startsWith("image")) {
             return "image";
+        } else if (mimeType.equals("application/pdf")) {
+            return "document";
         } else {
             return "unknown";
         }
@@ -33,6 +35,8 @@ public class MimeTypeDetector {
             return "Audio";
         } else if (mimeType.startsWith("image")) {
             return "Image";
+        } else if (mimeType.equals("application/pdf")) {
+            return "Document";
         } else {
             return "Asset";
         }
