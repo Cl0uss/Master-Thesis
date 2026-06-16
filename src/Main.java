@@ -63,17 +63,34 @@ public class Main {
         System.out.println("Uploading file to Irys...");
         String irysAssetUri = IrysUploader.upload(filePath, walletPath);
 
+        String irysCoverUri = null;
+
+        if (category.equals("audio")) {
+            Path coverPath = rawFilesDirectory
+                    .resolve("covers")
+                    .resolve(baseName + ".png");
+
+            if (!Files.exists(coverPath)) {
+                System.out.println("Cover image not found: " + coverPath);
+                return;
+            }
+
+            System.out.println("Uploading cover image to Irys...");
+            irysCoverUri = IrysUploader.upload(coverPath, walletPath);
+        }
+
         Path outputPath = metadataDirectory.resolve(metadataFileName);
 
         MetadataJsonWriter.write(
-                outputPath,
-                fileName,
-                irysAssetUri,
-                category,
-                mimeType,
-                fileSize,
-                sha256,
-                creatorWallet
+        outputPath,
+        fileName,
+        irysAssetUri,
+        irysCoverUri,
+        category,
+        mimeType,
+        fileSize,
+        sha256,
+        creatorWallet
         );
 
         System.out.println("Uploading metadata to Irys...");
@@ -83,6 +100,9 @@ public class Main {
         System.out.println("Metadata generated successfully.");
         System.out.println("Original file: " + fileName);
         System.out.println("Asset URI: " + irysAssetUri);
+        if (irysCoverUri != null) {
+            System.out.println("Cover URI: " + irysCoverUri);
+            }
         System.out.println("Metadata file: " + metadataFileName);
         System.out.println("Metadata URI: " + irysMetadataUri);
         System.out.println("MIME type: " + mimeType);

@@ -2,7 +2,6 @@ package functions;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IrysUploader {
@@ -17,28 +16,35 @@ public class IrysUploader {
                 walletPath.toString()
         );
 
-        processBuilder.redirectErrorStream(true);
-
         Process process = processBuilder.start();
 
-        StringBuilder output = new StringBuilder();
+        StringBuilder stdout = new StringBuilder();
+        StringBuilder stderr = new StringBuilder();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream())
         )) {
             String line;
-
             while ((line = reader.readLine()) != null) {
-                output.append(line).append(System.lineSeparator());
+                stdout.append(line).append(System.lineSeparator());
+            }
+        }
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getErrorStream())
+        )) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stderr.append(line).append(System.lineSeparator());
             }
         }
 
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            throw new RuntimeException("Irys upload failed:\n" + output);
+            throw new RuntimeException("Irys upload failed:\n" + stderr);
         }
 
-        return output.toString().trim();
+        return stdout.toString().trim();
     }
 }

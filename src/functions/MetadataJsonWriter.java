@@ -8,7 +8,8 @@ public class MetadataJsonWriter {
     public static void write(
             Path outputPath,
             String fileName,
-            String arweaveAssetUri,
+            String assetUri,
+            String coverUri,
             String category,
             String mimeType,
             long fileSize,
@@ -16,13 +17,25 @@ public class MetadataJsonWriter {
             String creatorWallet
     ) throws Exception {
 
+        String mediaFields;
+
+        if (category.equals("audio")) {
+            mediaFields = """
+                  "image": "%s",
+                  "animation_url": "%s",
+            """.formatted(coverUri, assetUri);
+        } else {
+            mediaFields = """
+                  "image": "%s",
+            """.formatted(assetUri);
+        }
+
         String metadata = """
                 {
                   "name": "%s",
                   "symbol": "TMDC",
                   "description": "Digital asset used as part of a blockchain-based transmedia digital content framework.",
-                  "image": "%s",
-                  "animation_url": "%s",
+                %s
                   "seller_fee_basis_points": 500,
                   "attributes": [
                     {
@@ -63,9 +76,17 @@ public class MetadataJsonWriter {
                   }
                 }
                 """.formatted(
-                fileName, arweaveAssetUri, arweaveAssetUri,
-                category, fileName, mimeType, fileSize, sha256,
-                arweaveAssetUri, mimeType, category, creatorWallet
+                fileName,
+                mediaFields,
+                category,
+                fileName,
+                mimeType,
+                fileSize,
+                sha256,
+                assetUri,
+                mimeType,
+                category,
+                creatorWallet
         );
 
         Files.writeString(outputPath, metadata);
