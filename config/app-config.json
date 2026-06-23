@@ -1,0 +1,13 @@
+{
+  "creatorWallet": "9p2MgiUevA82gaJfAVeizSYD38bVMXiijGFcm8rxUXbS",
+  "walletPath": "/home/cl0us/Desktop/thesis-wallet/thesis-wallet.json",
+  "secondWallet": "EfNeambEcj1aGKfKzKpYdcdxXuzDkgAdwgQDSZfpXHSa",
+  "symbol": "TMDC",
+  "sellerFeePercent": 5,
+  "network": "mainnet-beta",
+  "rawFilesDirectory": "rawFiles",
+  "metadataDirectory": "metadata",
+  "coverDirectory": "rawFiles/covers",
+  "rpcUrl": "https://api.mainnet-beta.solana.com",
+  "defaultNftName": "TMDC NFT"
+}

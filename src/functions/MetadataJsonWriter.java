@@ -14,7 +14,8 @@ public class MetadataJsonWriter {
             String mimeType,
             long fileSize,
             String sha256,
-            String creatorWallet
+            String creatorWallet,
+            String symbol
     ) throws Exception {
 
         String mediaFields;
@@ -33,7 +34,7 @@ public class MetadataJsonWriter {
         String metadata = """
                 {
                   "name": "%s",
-                  "symbol": "TMDC",
+                  "symbol": "%s",
                   "description": "Digital asset used as part of a blockchain-based transmedia digital content framework.",
                 %s
                   "seller_fee_basis_points": 500,
@@ -77,6 +78,7 @@ public class MetadataJsonWriter {
                 }
                 """.formatted(
                 fileName,
+                symbol,
                 mediaFields,
                 category,
                 fileName,

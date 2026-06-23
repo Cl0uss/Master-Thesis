@@ -20,7 +20,7 @@ async function main(): Promise<void> {
 
     if (!mintAddress || !destinationWallet || !walletPath) {
         console.error(
-            "Usage: npx tsx transferNft.ts <mintAddress> <destinationWallet> <walletPath>"
+            "Usage: npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> <walletPath>"
         );
         process.exit(1);
     }

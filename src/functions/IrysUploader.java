@@ -11,7 +11,7 @@ public class IrysUploader {
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "npx",
                 "tsx",
-                "uploadToIrys.ts",
+                "scripts/uploadToIrys.ts",
                 filePath.toString(),
                 walletPath.toString()
         );

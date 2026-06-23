@@ -5,7 +5,7 @@ set -eu
 cd -- "$(dirname -- "$0")"
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: ./launch [file-name]"
+    echo "Usage: ./launch [file-name] [--mint]"
     echo "Example: ./launch bonk.mp3"
     exit 1
 fi
@@ -14,4 +14,4 @@ mkdir -p out
 
 javac -d out $(find src -name "*.java")
 
-java -cp out Main "$1"
+java -cp out Main "$@"

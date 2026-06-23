@@ -10,17 +10,19 @@ public class NftMinter {
             String metadataUri,
             Path walletPath,
             String nftName,
-            String symbol
+            String symbol,
+            String rpcUrl
     ) throws Exception {
 
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "npx",
                 "tsx",
-                "mintNft.ts",
+                "scripts/mintNft.ts",
                 metadataUri,
                 walletPath.toString(),
                 nftName,
-                symbol
+                symbol,
+                rpcUrl
         );
 
         Process process = processBuilder.start();

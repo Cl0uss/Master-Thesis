@@ -26,7 +26,7 @@ npm install
 metadata/      Generated metadata JSON files
 rawFiles/      Source media files
 src/           Java source code
-upload-to-arweave.ts
+scripts/       TypeScript scripts for Irys and Solana
 ```
 
 ## Generate Metadata
@@ -59,13 +59,13 @@ metadata/
 ## Upload File to Irys
 
 ```bash
-npx tsx upload-to-arweave.ts <filePath> <walletPath>
+npx tsx scripts/uploadToIrys.ts <filePath> <walletPath>
 ```
 
 Example:
 
 ```bash
-npx tsx upload-to-arweave.ts rawFiles/bonk.mp3 ~/Desktop/thesis-wallet/thesis-wallet.json
+npx tsx scripts/uploadToIrys.ts rawFiles/bonk.mp3 ~/Desktop/thesis-wallet/thesis-wallet.json
 ```
 
 The command returns a permanent Irys URL:

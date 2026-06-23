@@ -10,7 +10,7 @@ async function main(): Promise<void> {
 
     if (!filePath || !walletPath) {
         console.error(
-            "Usage: npx tsx uploadToIrys.ts <filePath> <walletPath>"
+            "Usage: npx tsx scripts/uploadToIrys.ts <filePath> <walletPath>"
         );
         process.exit(1);
     }

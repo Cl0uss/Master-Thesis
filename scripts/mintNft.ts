@@ -16,18 +16,18 @@ import {
 async function main(): Promise<void> {
     const metadataUri = process.argv[2];
     const walletPath = process.argv[3];
-    const nftName = process.argv[4] ?? "TMDC NFT";
-    const symbol = process.argv[5] ?? "TMDC";
+    const nftName = process.argv[4];
+    const symbol = process.argv[5];
+    const rpcUrl = process.argv[6];
 
-    if (!metadataUri || !walletPath) {
+    if (!metadataUri || !walletPath || !nftName || !symbol || !rpcUrl) {
         console.error(
-            "Usage: npx tsx mintNft.ts <metadataUri> <walletPath> [nftName] [symbol]"
+            "Usage: npx tsx scripts/mintNft.ts <metadataUri> <walletPath> <nftName> <symbol> <rpcUrl>"
         );
         process.exit(1);
     }
 
-    const umi = createUmi("https://api.mainnet-beta.solana.com")
-        .use(mplTokenMetadata());
+    const umi = createUmi(rpcUrl).use(mplTokenMetadata());
 
     const secretKey = JSON.parse(fs.readFileSync(walletPath, "utf8"));
 

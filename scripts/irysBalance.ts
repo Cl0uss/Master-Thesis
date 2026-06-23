@@ -5,7 +5,7 @@ import { Solana } from "@irys/upload-solana";
 const walletPath = process.argv[2];
 
 if (!walletPath) {
-    console.error("Usage: npx tsx irysBalance.ts <walletPath>");
+    console.error("Usage: npx tsx scripts/irysBalance.ts <walletPath>");
     process.exit(1);
 }
 

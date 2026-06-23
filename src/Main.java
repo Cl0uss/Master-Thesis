@@ -1,12 +1,13 @@
-import functions.FileHashGenerator;
-import functions.MetadataJsonWriter;
-import functions.MimeTypeDetector;
-import functions.IrysUploader;
-import functions.NftMinter;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import functions.AppConfig;
+import functions.FileHashGenerator;
+import functions.IrysUploader;
+import functions.MetadataJsonWriter;
+import functions.MimeTypeDetector;
+import functions.NftMinter;
 
 public class Main {
 
@@ -15,12 +16,27 @@ public class Main {
         if (args.length == 0) {
             System.out.println("Please provide a file name.");
             System.out.println("Example: ./launch bonk.mp3");
+            System.out.println("Example with NFT mint: ./launch bonk.mp3 --mint");
             return;
         }
 
+        boolean shouldMint = false;
+
+        for (int i = 1; i < args.length; i++) {
+            if (args[i].equals("--mint")) {
+                shouldMint = true;
+            } else {
+                System.out.println("Unknown option: " + args[i]);
+                System.out.println("Supported option: --mint");
+                return;
+            }
+        }
+
+        AppConfig config = AppConfig.load(Paths.get("config", "app-config.json"));
+
         String inputFileName = args[0];
 
-        Path rawFilesDirectory = Paths.get("rawFiles");
+        Path rawFilesDirectory = config.rawFilesDirectory();
         Path filePath = rawFilesDirectory.resolve(inputFileName);
 
         if (!Files.exists(filePath)) {
@@ -33,20 +49,13 @@ public class Main {
             return;
         }
 
-        Path metadataDirectory = Paths.get("metadata");
+        Path metadataDirectory = config.metadataDirectory();
 
         if (!Files.exists(metadataDirectory)) {
             Files.createDirectories(metadataDirectory);
         }
 
-        String creatorWallet = "9p2MgiUevA82gaJfAVeizSYD38bVMXiijGFcm8rxUXbS";
-
-        Path walletPath = Paths.get(
-                System.getProperty("user.home"),
-                "Desktop",
-                "thesis-wallet",
-                "thesis-wallet.json"
-        );
+        Path walletPath = config.walletPath();
 
         String fileName = filePath.getFileName().toString();
 
@@ -67,9 +76,7 @@ public class Main {
         String irysCoverUri = null;
 
         if (category.equals("audio") || category.equals("document")) {
-            Path coverPath = rawFilesDirectory
-                    .resolve("covers")
-                    .resolve(baseName + ".png");
+            Path coverPath = config.coverDirectory().resolve(baseName + ".png");
 
             if (!Files.exists(coverPath)) {
                 System.out.println("Cover image not found: " + coverPath);
@@ -83,44 +90,58 @@ public class Main {
         Path outputPath = metadataDirectory.resolve(metadataFileName);
 
         MetadataJsonWriter.write(
-        outputPath,
-        fileName,
-        irysAssetUri,
-        irysCoverUri,
-        category,
-        mimeType,
-        fileSize,
-        sha256,
-        creatorWallet
+                outputPath,
+                fileName,
+                irysAssetUri,
+                irysCoverUri,
+                category,
+                mimeType,
+                fileSize,
+                sha256,
+                config.creatorWallet(),
+                config.symbol()
         );
 
         System.out.println("Uploading metadata to Irys...");
         String irysMetadataUri = IrysUploader.upload(outputPath, walletPath);
-        String nftName = baseName + " NFT";
-        String nftSymbol = "TMDC";
 
-        System.out.println("Minting NFT on Solana...");
-        NftMinter.MintResult mintResult = NftMinter.mint(
+        NftMinter.MintResult mintResult = null;
+
+        if (shouldMint) {
+            String nftName = baseName + " NFT";
+            String nftSymbol = config.symbol();
+
+            System.out.println("Minting NFT on Solana...");
+            mintResult = NftMinter.mint(
                 irysMetadataUri,
                 walletPath,
                 nftName,
-                nftSymbol
-        );
+                nftSymbol,
+                config.rpcUrl()
+            );
+        }
 
         System.out.println("----------------------------------");
-        System.out.println("Metadata generated successfully.");
+        System.out.println("Pipeline completed successfully.");
         System.out.println("Original file: " + fileName);
         System.out.println("Asset URI: " + irysAssetUri);
+
         if (irysCoverUri != null) {
             System.out.println("Cover URI: " + irysCoverUri);
-            }
+        }
+
         System.out.println("Metadata file: " + metadataFileName);
         System.out.println("Metadata URI: " + irysMetadataUri);
         System.out.println("MIME type: " + mimeType);
         System.out.println("SHA-256: " + sha256);
         System.out.println("Output path: " + outputPath);
-        System.out.println("NFT Mint Address: " + mintResult.mintAddress());
-        System.out.println("NFT Transaction: " + mintResult.transactionSignature());
-        System.out.println("NFT Explorer: https://explorer.solana.com/address/" + mintResult.mintAddress());
+
+        if (mintResult != null) {
+            System.out.println("NFT Mint Address: " + mintResult.mintAddress());
+            System.out.println("NFT Transaction: " + mintResult.transactionSignature());
+            System.out.println("NFT Explorer: https://explorer.solana.com/address/" + mintResult.mintAddress());
+        } else {
+            System.out.println("NFT mint skipped. Run with --mint to mint on Solana.");
+        }
     }
 }

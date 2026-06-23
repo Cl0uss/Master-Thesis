@@ -4,7 +4,7 @@ const mintAddress = process.argv[2];
 const walletAddress = process.argv[3];
 
 if (!mintAddress || !walletAddress) {
-    console.error("Usage: npx tsx checkNftOwner.ts <mintAddress> <walletAddress>");
+    console.error("Usage: npx tsx scripts/checkNftOwner.ts <mintAddress> <walletAddress>");
     process.exit(1);
 }
 
