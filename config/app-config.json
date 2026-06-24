@@ -1,4 +1,5 @@
 {
+  "appName": "Master-Thesis",
   "creatorWallet": "9p2MgiUevA82gaJfAVeizSYD38bVMXiijGFcm8rxUXbS",
   "walletPath": "/home/cl0us/Desktop/thesis-wallet/thesis-wallet.json",
   "secondWallet": "EfNeambEcj1aGKfKzKpYdcdxXuzDkgAdwgQDSZfpXHSa",
@@ -8,6 +9,12 @@
   "rawFilesDirectory": "rawFiles",
   "metadataDirectory": "metadata",
   "coverDirectory": "rawFiles/covers",
+  "coverExtension": ".png",
   "rpcUrl": "https://api.mainnet-beta.solana.com",
-  "defaultNftName": "TMDC NFT"
+  "nftNameTemplate": "{baseName} NFT",
+  "metadataDescription": "Digital asset used as part of a blockchain-based transmedia digital content framework.",
+  "irysGatewayUrl": "https://gateway.irys.xyz",
+  "irysFundingBufferSol": "0.00001",
+  "estimatedMetadataSizeBytes": 2500,
+  "estimatedMintCostSol": "0.015"
 }

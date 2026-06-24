@@ -2,13 +2,13 @@ import fs from "node:fs";
 import { Uploader } from "@irys/upload";
 import { Solana } from "@irys/upload-solana";
 
-const walletPath = process.argv[2];
+import { loadConfig, resolveConfigPath } from "./config.js";
 
-if (!walletPath) {
-    console.error("Usage: npx tsx scripts/irysBalance.ts <walletPath>");
-    process.exit(1);
-}
+// Prints the current Irys balance for the configured or provided wallet.
+const config = loadConfig();
+const walletPath = process.argv[2] ?? resolveConfigPath(config.walletPath);
 
+// Load the wallet before asking Irys for its funded balance.
 const wallet = JSON.parse(fs.readFileSync(walletPath, "utf8"));
 const irys = await Uploader(Solana).withWallet(wallet);
 

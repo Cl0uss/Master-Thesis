@@ -4,8 +4,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+// Holds every runtime value loaded from config/app-config.json.
 public class AppConfig {
 
+    private final String appName;
     private final String creatorWallet;
     private final Path walletPath;
     private final String secondWallet;
@@ -16,8 +18,16 @@ public class AppConfig {
     private final Path rawFilesDirectory;
     private final Path metadataDirectory;
     private final Path coverDirectory;
+    private final String coverExtension;
+    private final String nftNameTemplate;
+    private final String metadataDescription;
+    private final String irysGatewayUrl;
+    private final String irysFundingBufferSol;
+    private final int estimatedMetadataSizeBytes;
+    private final String estimatedMintCostSol;
 
     private AppConfig(
+            String appName,
             String creatorWallet,
             Path walletPath,
             String secondWallet,
@@ -27,8 +37,16 @@ public class AppConfig {
             String rpcUrl,
             Path rawFilesDirectory,
             Path metadataDirectory,
-            Path coverDirectory
+            Path coverDirectory,
+            String coverExtension,
+            String nftNameTemplate,
+            String metadataDescription,
+            String irysGatewayUrl,
+            String irysFundingBufferSol,
+            int estimatedMetadataSizeBytes,
+            String estimatedMintCostSol
     ) {
+        this.appName = appName;
         this.creatorWallet = creatorWallet;
         this.walletPath = walletPath;
         this.secondWallet = secondWallet;
@@ -39,12 +57,21 @@ public class AppConfig {
         this.rawFilesDirectory = rawFilesDirectory;
         this.metadataDirectory = metadataDirectory;
         this.coverDirectory = coverDirectory;
+        this.coverExtension = coverExtension;
+        this.nftNameTemplate = nftNameTemplate;
+        this.metadataDescription = metadataDescription;
+        this.irysGatewayUrl = irysGatewayUrl;
+        this.irysFundingBufferSol = irysFundingBufferSol;
+        this.estimatedMetadataSizeBytes = estimatedMetadataSizeBytes;
+        this.estimatedMintCostSol = estimatedMintCostSol;
     }
 
+    // Reads the config file and maps every supported key into typed fields.
     public static AppConfig load(Path configPath) throws Exception {
 
         String json = Files.readString(configPath);
 
+        String appName = extractString(json, "appName");
         String creatorWallet = extractString(json, "creatorWallet");
         Path walletPath = Paths.get(extractString(json, "walletPath"));
         String secondWallet = extractString(json, "secondWallet");
@@ -52,6 +79,13 @@ public class AppConfig {
         int sellerFeePercent = extractInt(json, "sellerFeePercent");
         String network = extractString(json, "network");
         String rpcUrl = extractString(json, "rpcUrl");
+        String coverExtension = extractString(json, "coverExtension");
+        String nftNameTemplate = extractString(json, "nftNameTemplate");
+        String metadataDescription = extractString(json, "metadataDescription");
+        String irysGatewayUrl = extractString(json, "irysGatewayUrl");
+        String irysFundingBufferSol = extractString(json, "irysFundingBufferSol");
+        int estimatedMetadataSizeBytes = extractInt(json, "estimatedMetadataSizeBytes");
+        String estimatedMintCostSol = extractString(json, "estimatedMintCostSol");
 
         Path rawFilesDirectory =
                 Paths.get(extractString(json, "rawFilesDirectory"));
@@ -63,6 +97,7 @@ public class AppConfig {
                 Paths.get(extractString(json, "coverDirectory"));
 
         return new AppConfig(
+                appName,
                 creatorWallet,
                 walletPath,
                 secondWallet,
@@ -72,10 +107,18 @@ public class AppConfig {
                 rpcUrl,
                 rawFilesDirectory,
                 metadataDirectory,
-                coverDirectory
+                coverDirectory,
+                coverExtension,
+                nftNameTemplate,
+                metadataDescription,
+                irysGatewayUrl,
+                irysFundingBufferSol,
+                estimatedMetadataSizeBytes,
+                estimatedMintCostSol
         );
     }
 
+    // Extracts a string value from the flat JSON config.
     private static String extractString(String json, String key) {
 
         int start = json.indexOf("\"" + key + "\"");
@@ -93,6 +136,7 @@ public class AppConfig {
         return json.substring(firstQuote + 1, secondQuote);
     }
 
+    // Extracts an integer value from the flat JSON config.
     private static int extractInt(String json, String key) {
 
         int start = json.indexOf("\"" + key + "\"");
@@ -120,6 +164,10 @@ public class AppConfig {
         return Integer.parseInt(
                 json.substring(current, end)
         );
+    }
+
+    public String appName() {
+        return appName;
     }
 
     public String creatorWallet() {
@@ -160,5 +208,34 @@ public class AppConfig {
 
     public Path coverDirectory() {
         return coverDirectory;
+    }
+
+    public String coverExtension() {
+        return coverExtension;
+    }
+
+    // Builds the NFT name from the configured template and source base name.
+    public String nftName(String baseName) {
+        return nftNameTemplate.replace("{baseName}", baseName);
+    }
+
+    public String metadataDescription() {
+        return metadataDescription;
+    }
+
+    public String irysGatewayUrl() {
+        return irysGatewayUrl;
+    }
+
+    public String irysFundingBufferSol() {
+        return irysFundingBufferSol;
+    }
+
+    public int estimatedMetadataSizeBytes() {
+        return estimatedMetadataSizeBytes;
+    }
+
+    public String estimatedMintCostSol() {
+        return estimatedMintCostSol;
     }
 }

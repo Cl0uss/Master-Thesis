@@ -3,6 +3,7 @@ package functions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+// Writes Metaplex-compatible metadata JSON for uploaded assets.
 public class MetadataJsonWriter {
 
     public static void write(
@@ -15,9 +16,12 @@ public class MetadataJsonWriter {
             long fileSize,
             String sha256,
             String creatorWallet,
-            String symbol
+            String symbol,
+            int sellerFeePercent,
+            String description
     ) throws Exception {
 
+        // Choose metadata media fields based on whether the asset needs a cover image.
         String mediaFields;
 
         if (category.equals("audio") || category.equals("document")) {
@@ -31,13 +35,14 @@ public class MetadataJsonWriter {
             """.formatted(assetUri);
         }
 
+        // Build the final JSON document consumed by Metaplex during minting.
         String metadata = """
                 {
                   "name": "%s",
                   "symbol": "%s",
-                  "description": "Digital asset used as part of a blockchain-based transmedia digital content framework.",
+                  "description": "%s",
                 %s
-                  "seller_fee_basis_points": 500,
+                  "seller_fee_basis_points": %d,
                   "attributes": [
                     {
                       "trait_type": "Content Type",
@@ -79,7 +84,9 @@ public class MetadataJsonWriter {
                 """.formatted(
                 fileName,
                 symbol,
+                description,
                 mediaFields,
+                sellerFeePercent * 100,
                 category,
                 fileName,
                 mimeType,
@@ -91,6 +98,7 @@ public class MetadataJsonWriter {
                 creatorWallet
         );
 
+        // Persist metadata locally so it can be inspected and uploaded to Irys.
         Files.writeString(outputPath, metadata);
     }
 }

@@ -4,14 +4,17 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 
+// Bridges Java pipeline code to the TypeScript Solana mint script.
 public class NftMinter {
 
+    // Mints one NFT from an uploaded metadata URI and returns parsed mint details.
     public static MintResult mint(
             String metadataUri,
             Path walletPath,
             String nftName,
             String symbol,
-            String rpcUrl
+            String rpcUrl,
+            int sellerFeePercent
     ) throws Exception {
 
         ProcessBuilder processBuilder = new ProcessBuilder(
@@ -19,16 +22,35 @@ public class NftMinter {
                 "tsx",
                 "scripts/mintNft.ts",
                 metadataUri,
-                walletPath.toString(),
                 nftName,
+                walletPath.toString(),
                 symbol,
-                rpcUrl
+                rpcUrl,
+                String.valueOf(sellerFeePercent)
         );
 
         Process process = processBuilder.start();
 
         StringBuilder stdout = new StringBuilder();
         StringBuilder stderr = new StringBuilder();
+
+        // Print TypeScript progress logs live while stdout remains machine-readable.
+        Thread stderrThread = new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream())
+            )) {
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    stderr.append(line).append(System.lineSeparator());
+                    System.out.println(line);
+                }
+            } catch (Exception exception) {
+                stderr.append(exception.getMessage()).append(System.lineSeparator());
+            }
+        });
+
+        stderrThread.start();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream())
@@ -40,17 +62,8 @@ public class NftMinter {
             }
         }
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getErrorStream())
-        )) {
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                stderr.append(line).append(System.lineSeparator());
-            }
-        }
-
         int exitCode = process.waitFor();
+        stderrThread.join();
 
         if (exitCode != 0) {
             throw new RuntimeException("NFT mint failed:\n" + stderr);
@@ -59,6 +72,7 @@ public class NftMinter {
         String mintAddress = null;
         String transactionSignature = null;
 
+        // Parse the structured result lines emitted by mintNft.ts.
         for (String line : stdout.toString().split("\\R")) {
             if (line.startsWith("MINT_ADDRESS=")) {
                 mintAddress = line.substring("MINT_ADDRESS=".length());

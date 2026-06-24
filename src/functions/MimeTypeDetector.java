@@ -3,8 +3,10 @@ package functions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+// Detects MIME types and maps them to NFT metadata categories.
 public class MimeTypeDetector {
 
+    // Uses the operating system MIME detector with a safe fallback.
     public static String detect(Path filePath) throws Exception {
 
         String mimeType = Files.probeContentType(filePath);
@@ -16,6 +18,7 @@ public class MimeTypeDetector {
         return mimeType;
     }
 
+    // Maps MIME type strings into broad NFT categories.
     public static String getCategory(String mimeType) {
 
         if (mimeType.startsWith("audio")) {
@@ -29,6 +32,7 @@ public class MimeTypeDetector {
         }
     }
 
+    // Chooses the suffix used in generated metadata file names.
     public static String getMetadataSuffix(String mimeType) {
 
         if (mimeType.startsWith("audio")) {

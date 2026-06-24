@@ -5,8 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 
+// Generates integrity hashes for source media files.
 public class FileHashGenerator {
 
+    // Streams the file into SHA-256 so large files do not need to be loaded at once.
     public static String calculateSHA256(Path path) throws Exception {
 
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
