@@ -104,7 +104,7 @@ Important fields:
   "symbol": "NFT symbol",
   "sellerFeePercent": 5,
   "network": "mainnet-beta",
-  "rpcUrl": "https://api.mainnet-beta.solana.com",
+  "rpcUrl": "https://mainnet.helius-rpc.com/?api-key=[Your key]",
   "rawFilesDirectory": "rawFiles",
   "metadataDirectory": "metadata",
   "coverDirectory": "rawFiles/covers",

@@ -81,11 +81,17 @@ async function main(): Promise<void> {
     const signature = bs58.encode(result.signature);
 
     logStep("Transfer transaction confirmed.");
+
     console.log("NFT transferred successfully.");
     console.log("Mint address:", mintAddress);
+    console.log("Previous owner:", umi.identity.publicKey.toString());
     console.log("New owner:", destinationWallet);
     console.log("Transaction:", signature);
     console.log(`Explorer: https://explorer.solana.com/tx/${signature}`);
+
+    console.log("");
+    console.log("Ownership transfer was confirmed by the Solana transaction.");
+    console.log("Separate owner check is optional and may fail on public RPC because of rate limits.");
 }
 
 main().catch((error) => {

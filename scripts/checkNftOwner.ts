@@ -1,66 +1,101 @@
+import fs from "node:fs";
 import { Connection, PublicKey } from "@solana/web3.js";
 
-import { loadConfig } from "./config.js";
+function resolveRpcUrl(arg?: string): string {
+    if (!arg) {
+        const config = JSON.parse(fs.readFileSync("config/app-config.json", "utf8"));
+        return config.rpcUrl;
+    }
 
-// Finds the current owner token account for a given NFT mint.
-const config = loadConfig();
-const mintAddress = process.argv[2];
-const secondArg = process.argv[3];
-const thirdArg = process.argv[4];
-const secondArgIsRpcUrl = secondArg?.startsWith("http://") || secondArg?.startsWith("https://");
-const walletAddress = secondArg && !secondArgIsRpcUrl ? secondArg : undefined;
-const rpcUrl = thirdArg ?? (secondArgIsRpcUrl ? secondArg : config.rpcUrl);
+    if (arg.startsWith("http")) {
+        return arg;
+    }
 
-if (!mintAddress) {
-    console.error("Usage: npx tsx scripts/checkNftOwner.ts <mintAddress> [walletAddress] [rpcUrl]");
-    process.exit(1);
+    const config = JSON.parse(fs.readFileSync(arg, "utf8"));
+    return config.rpcUrl;
 }
 
-console.log("[Owner check] Using RPC:", rpcUrl);
-console.log("[Owner check] NFT mint:", mintAddress);
+async function withRetry<T>(
+    label: string,
+    fn: () => Promise<T>,
+    attempts = 3
+): Promise<T> {
+    let lastError: unknown;
 
-const connection = new Connection(rpcUrl);
-const mint = new PublicKey(mintAddress);
+    for (let i = 1; i <= attempts; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error;
 
-if (walletAddress) {
-    console.log("[Owner check] Checking wallet:", walletAddress);
-    const owner = new PublicKey(walletAddress);
-    const accounts = await connection.getParsedTokenAccountsByOwner(owner, { mint });
-
-    if (accounts.value.length === 0) {
-        console.log("NFT not found in this wallet.");
-    } else {
-        for (const account of accounts.value) {
-            const info = account.account.data.parsed.info;
-            console.log("NFT found.");
-            console.log("Owner:", walletAddress);
-            console.log("Token account:", account.pubkey.toBase58());
-            console.log("Amount:", info.tokenAmount.uiAmountString);
+            if (i < attempts) {
+                const delayMs = i * 1000;
+                console.error(`${label} failed. Retrying in ${delayMs}ms...`);
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
         }
     }
 
-    process.exit(0);
+    throw lastError;
 }
 
-console.log("[Owner check] Searching token account with amount 1...");
-const largestAccounts = await connection.getTokenLargestAccounts(mint);
-const activeAccount = largestAccounts.value.find((account) => account.uiAmount === 1);
+async function main(): Promise<void> {
+    const mintAddress = process.argv[2];
+    const rpcUrl = resolveRpcUrl(process.argv[3]);
 
-if (!activeAccount) {
-    console.log("NFT owner not found. No token account with amount 1 exists for this mint.");
-    process.exit(0);
+    if (!mintAddress) {
+        console.error("Usage: npx tsx scripts/checkNftOwner.ts <mintAddress> [rpcUrl|configPath]");
+        process.exit(1);
+    }
+
+    console.log("[Owner check] Using RPC:", rpcUrl);
+    console.log("[Owner check] NFT mint:", mintAddress);
+
+    const connection = new Connection(rpcUrl, "confirmed");
+    const mint = new PublicKey(mintAddress);
+
+    console.log("[Owner check] Getting largest token account...");
+
+    const largestAccounts = await withRetry(
+        "getTokenLargestAccounts",
+        () => connection.getTokenLargestAccounts(mint)
+    );
+
+    const largestAccount = largestAccounts.value.find((account) => {
+        return account.amount === "1";
+    });
+
+    if (!largestAccount) {
+        console.log("NFT owner not found.");
+        process.exit(1);
+    }
+
+    console.log("[Owner check] Reading token account owner...");
+
+    const accountInfo = await withRetry(
+        "getParsedAccountInfo",
+        () => connection.getParsedAccountInfo(largestAccount.address)
+    );
+
+    const parsedData: any = accountInfo.value?.data;
+
+    if (!parsedData?.parsed?.info?.owner) {
+        console.log("Token account found, but owner could not be parsed.");
+        console.log("Token account:", largestAccount.address.toBase58());
+        process.exit(1);
+    }
+
+    const owner = parsedData.parsed.info.owner;
+
+    console.log("NFT found.");
+    console.log("Mint:", mintAddress);
+    console.log("Owner:", owner);
+    console.log("Token account:", largestAccount.address.toBase58());
+    console.log("Amount:", largestAccount.amount);
 }
 
-console.log("[Owner check] Reading active token account...");
-const accountInfo = await connection.getParsedAccountInfo(activeAccount.address);
-const parsedData = accountInfo.value?.data;
-
-if (!parsedData || typeof parsedData === "string" || !("parsed" in parsedData)) {
-    throw new Error("Unable to parse token account owner.");
-}
-
-const owner = parsedData.parsed.info.owner;
-console.log("NFT found.");
-console.log("Owner:", owner);
-console.log("Token account:", activeAccount.address.toBase58());
-console.log("Amount:", activeAccount.uiAmountString);
+main().catch((error) => {
+    console.error("Owner check failed:");
+    console.error(error);
+    process.exit(1);
+});
