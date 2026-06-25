@@ -8,6 +8,7 @@ import functions.IrysUploader;
 import functions.MetadataJsonWriter;
 import functions.MimeTypeDetector;
 import functions.NftMinter;
+import functions.RpcConfig;
 
 // Runs the full asset-to-metadata pipeline and optionally mints an NFT.
 public class Main {
@@ -136,6 +137,7 @@ public class Main {
 
         // Mint only when the caller explicitly passes --mint.
         if (shouldMint) {
+            RpcConfig rpcConfig = RpcConfig.load(Paths.get("config", "rpc-config.json"));
             String nftName = config.nftName(baseName);
             String nftSymbol = config.symbol();
 
@@ -145,7 +147,7 @@ public class Main {
                 walletPath,
                 nftName,
                 nftSymbol,
-                config.rpcUrl(),
+                rpcConfig.rpcUrl(),
                 config.sellerFeePercent()
             );
             System.out.println("NFT mint completed: " + mintResult.mintAddress());

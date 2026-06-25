@@ -4,10 +4,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadConfig } from "./config.js";
+import { loadConfig, loadRpcConfig } from "./config.js";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const config = loadConfig(path.join(projectRoot, "config", "app-config.json"));
+const rpcConfig = loadRpcConfig(path.join(projectRoot, "config", "rpc-config.json"));
 const rawFilesDirectory = path.join(projectRoot, config.rawFilesDirectory);
 const coverDirectory = path.join(projectRoot, config.coverDirectory);
 const walletUploadDirectory = path.join(projectRoot, ".runtime", "wallets");
@@ -151,7 +152,7 @@ function runPipeline(response: http.ServerResponse, filename: string, walletPath
 function runCheckOwner(response: http.ServerResponse, mintAddress: string): void {
     runCommand(
         response,
-        ["npx", "tsx", "scripts/checkNftOwner.ts", mintAddress, config.rpcUrl],
+        ["npx", "tsx", "scripts/checkNftOwner.ts", mintAddress, rpcConfig.rpcUrl],
         "Owner check"
     );
 }
@@ -171,7 +172,7 @@ function runTransfer(
             mintAddress,
             destinationWallet,
             walletPath,
-            config.rpcUrl
+            rpcConfig.rpcUrl
         ],
         "Transfer"
     );

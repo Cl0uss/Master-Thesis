@@ -13,16 +13,17 @@ import {
     percentAmount
 } from "@metaplex-foundation/umi";
 
-import { loadConfig, resolveConfigPath } from "./config.js";
+import { loadConfig, loadRpcConfig, resolveConfigPath } from "./config.js";
 
 // Mints one NFT on Solana from an uploaded metadata URI.
 async function main(): Promise<void> {
     const config = loadConfig();
+    const rpcConfig = loadRpcConfig();
     const metadataUri = process.argv[2];
     const nftName = process.argv[3];
     const walletPath = process.argv[4] ?? resolveConfigPath(config.walletPath);
     const symbol = process.argv[5] ?? config.symbol;
-    const rpcUrl = process.argv[6] ?? config.rpcUrl;
+    const rpcUrl = process.argv[6] ?? rpcConfig.rpcUrl;
     const sellerFeePercent = Number(process.argv[7] ?? config.sellerFeePercent);
 
     if (!metadataUri || !nftName) {

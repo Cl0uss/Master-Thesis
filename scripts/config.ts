@@ -14,7 +14,6 @@ export type AppConfig = {
     metadataDirectory: string;
     coverDirectory: string;
     coverExtension: string;
-    rpcUrl: string;
     nftNameTemplate: string;
     metadataDescription: string;
     irysGatewayUrl: string;
@@ -23,9 +22,18 @@ export type AppConfig = {
     estimatedMintCostSol: string;
 };
 
-// Loads the shared JSON config from the project root.
+export type RpcConfig = {
+    rpcUrl: string;
+};
+
+// Loads the shared non-secret app config from the project root.
 export function loadConfig(configPath = path.join("config", "app-config.json")): AppConfig {
     return JSON.parse(fs.readFileSync(configPath, "utf8")) as AppConfig;
+}
+
+// Loads the private RPC config. Keep config/rpc-config.json out of git.
+export function loadRpcConfig(configPath = path.join("config", "rpc-config.json")): RpcConfig {
+    return JSON.parse(fs.readFileSync(configPath, "utf8")) as RpcConfig;
 }
 
 // Resolves config paths so both absolute and relative values work.

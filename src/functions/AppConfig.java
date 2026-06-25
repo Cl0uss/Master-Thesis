@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-// Holds every runtime value loaded from config/app-config.json.
+// Holds non-secret runtime values loaded from config/app-config.json.
 public class AppConfig {
 
     private final String appName;
@@ -14,7 +14,6 @@ public class AppConfig {
     private final String symbol;
     private final int sellerFeePercent;
     private final String network;
-    private final String rpcUrl;
     private final Path rawFilesDirectory;
     private final Path metadataDirectory;
     private final Path coverDirectory;
@@ -34,7 +33,6 @@ public class AppConfig {
             String symbol,
             int sellerFeePercent,
             String network,
-            String rpcUrl,
             Path rawFilesDirectory,
             Path metadataDirectory,
             Path coverDirectory,
@@ -53,7 +51,6 @@ public class AppConfig {
         this.symbol = symbol;
         this.sellerFeePercent = sellerFeePercent;
         this.network = network;
-        this.rpcUrl = rpcUrl;
         this.rawFilesDirectory = rawFilesDirectory;
         this.metadataDirectory = metadataDirectory;
         this.coverDirectory = coverDirectory;
@@ -78,7 +75,6 @@ public class AppConfig {
         String symbol = extractString(json, "symbol");
         int sellerFeePercent = extractInt(json, "sellerFeePercent");
         String network = extractString(json, "network");
-        String rpcUrl = extractString(json, "rpcUrl");
         String coverExtension = extractString(json, "coverExtension");
         String nftNameTemplate = extractString(json, "nftNameTemplate");
         String metadataDescription = extractString(json, "metadataDescription");
@@ -104,7 +100,6 @@ public class AppConfig {
                 symbol,
                 sellerFeePercent,
                 network,
-                rpcUrl,
                 rawFilesDirectory,
                 metadataDirectory,
                 coverDirectory,
@@ -194,9 +189,6 @@ public class AppConfig {
         return network;
     }
 
-    public String rpcUrl() {
-        return rpcUrl;
-    }
 
     public Path rawFilesDirectory() {
         return rawFilesDirectory;

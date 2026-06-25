@@ -13,7 +13,7 @@ import {
     publicKey
 } from "@metaplex-foundation/umi";
 
-import { loadConfig, resolveConfigPath } from "./config.js";
+import { loadConfig, loadRpcConfig, resolveConfigPath } from "./config.js";
 
 function logStep(message: string): void {
     console.log(`[Transfer] ${message}`);
@@ -22,10 +22,11 @@ function logStep(message: string): void {
 // Transfers one existing NFT to another wallet.
 async function main(): Promise<void> {
     const config = loadConfig();
+    const rpcConfig = loadRpcConfig();
     const mintAddress = process.argv[2];
     const destinationWallet = process.argv[3];
     const walletPath = process.argv[4] ?? resolveConfigPath(config.walletPath);
-    const rpcUrl = process.argv[5] ?? config.rpcUrl;
+    const rpcUrl = process.argv[5] ?? rpcConfig.rpcUrl;
 
     if (!mintAddress || !destinationWallet) {
         console.error(

@@ -3,7 +3,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 
 function resolveRpcUrl(arg?: string): string {
     if (!arg) {
-        const config = JSON.parse(fs.readFileSync("config/app-config.json", "utf8"));
+        const config = JSON.parse(fs.readFileSync("config/rpc-config.json", "utf8"));
         return config.rpcUrl;
     }
 
@@ -44,7 +44,7 @@ async function main(): Promise<void> {
     const rpcUrl = resolveRpcUrl(process.argv[3]);
 
     if (!mintAddress) {
-        console.error("Usage: npx tsx scripts/checkNftOwner.ts <mintAddress> [rpcUrl|configPath]");
+        console.error("Usage: npx tsx scripts/checkNftOwner.ts <mintAddress> [rpcUrl|rpcConfigPath]");
         process.exit(1);
     }
 

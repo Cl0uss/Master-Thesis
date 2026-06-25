@@ -1,20 +1,18 @@
 {
   "name": "master-thesis",
   "version": "1.0.0",
-  "description": "This project is part of the master thesis:",
-  "main": "index.js",
+  "description": "Blockchain-based framework for transmedia digital content distribution using Solana NFTs and Irys decentralized storage.",
+  "type": "module",
+  "author": "Niko Kasradze",
+  "license": "UNLICENSED",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "ui": "tsx scripts/uiServer.ts"
+    "ui": "tsx scripts/uiServer.ts",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Cl0uss/Master-Thesis.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/Cl0uss/Master-Thesis/issues"
   },
