@@ -15,5 +15,8 @@
     "irysGatewayUrl": "https://gateway.irys.xyz",
     "irysFundingBufferSol": "0.00001",
     "estimatedMetadataSizeBytes": 2500,
-    "estimatedMintCostSol": "0.015"
+    "estimatedMintCostSol": "0.015",
+    "collectionName": "Transmedia Content Collection",
+    "collectionDescription": "Collection NFT for the blockchain-based transmedia digital content framework.",
+    "collectionCoverFile": "rawFiles/covers/collection.jpg"
 }

@@ -6,41 +6,58 @@ import { Solana } from "@irys/upload-solana";
 
 import { loadConfig, resolveConfigPath } from "./config.js";
 
-// Uploads one file to Irys and prints the resulting gateway URI to stdout.
-async function main(): Promise<void> {
+// Reusable function that uploads a file and returns its gateway URI.
+export async function uploadFile(
+    filePath: string,
+    walletPathOverride?: string
+): Promise<string> {
+
     const config = loadConfig();
-    const filePath = process.argv[2];
-    const walletPath = process.argv[3] ?? resolveConfigPath(config.walletPath);
 
-    if (!filePath) {
-        console.error(
-            "Usage: npx tsx scripts/uploadToIrys.ts <filePath> [walletPath]"
-        );
-        process.exit(1);
-    }
+    const walletPath =
+        walletPathOverride ??
+        resolveConfigPath(config.walletPath);
 
-    // Load wallet and file data before asking Irys for price and balance.
     console.error(`[Irys] Reading wallet: ${walletPath}`);
+
     const wallet = JSON.parse(
         fs.readFileSync(walletPath, "utf8")
     );
 
     console.error(`[Irys] Reading file: ${filePath}`);
+
     const data = fs.readFileSync(filePath);
-    console.error(`[Irys] File size: ${data.length} bytes`);
 
-    console.error("[Irys] Initializing Solana uploader...");
-    const irys = await Uploader(Solana).withWallet(wallet);
+    console.error(
+        `[Irys] File size: ${data.length} bytes`
+    );
 
-    // Query price and balance before deciding whether funding is needed.
-    console.error("[Irys] Requesting upload price...");
+    console.error(
+        "[Irys] Initializing Solana uploader..."
+    );
+
+    const irys = await Uploader(Solana)
+        .withWallet(wallet);
+
+    console.error(
+        "[Irys] Requesting upload price..."
+    );
+
     const price = await irys.getPrice(data.length);
 
-    console.error("[Irys] Checking Irys balance...");
+    console.error(
+        "[Irys] Checking Irys balance..."
+    );
+
     const balance = await irys.getBalance();
 
-    const buffer = irys.utils.toAtomic(config.irysFundingBufferSol);
-    const requiredBalance = price.plus(buffer);
+    const buffer =
+        irys.utils.toAtomic(
+            config.irysFundingBufferSol
+        );
+
+    const requiredBalance =
+        price.plus(buffer);
 
     console.error(
         "Upload price:",
@@ -56,56 +73,78 @@ async function main(): Promise<void> {
 
     console.error(
         "Required balance:",
-        irys.utils.fromAtomic(requiredBalance).toString(),
+        irys.utils
+            .fromAtomic(requiredBalance)
+            .toString(),
         "SOL"
     );
 
-    // Fund the Irys balance only when the current balance is insufficient.
     if (balance.lt(requiredBalance)) {
 
-        const fundAmount = requiredBalance.minus(balance);
+        const fundAmount =
+            requiredBalance.minus(balance);
 
         console.error(
             "Funding Irys balance with",
-            irys.utils.fromAtomic(fundAmount).toString(),
+            irys.utils
+                .fromAtomic(fundAmount)
+                .toString(),
             "SOL..."
         );
 
-        const fundResult = await irys.fund(fundAmount);
+        const fundResult =
+            await irys.fund(fundAmount);
 
-        console.error("[Irys] Fund successful:");
+        console.error(
+            "[Irys] Fund successful:"
+        );
+
         console.error(fundResult);
+
     } else {
-        console.error("[Irys] Existing balance is sufficient. Funding skipped.");
+
+        console.error(
+            "[Irys] Existing balance is sufficient. Funding skipped."
+        );
     }
 
-    // Upload the bytes with tags required for content discovery.
-    console.error("[Irys] Uploading data...");
-    const receipt = await irys.upload(data, {
-        tags: [
-            {
-                name: "Content-Type",
-                value: getContentType(filePath)
-            },
-            {
-                name: "App-Name",
-                value: config.appName
-            },
-            {
-                name: "Storage-Layer",
-                value: "Irys"
-            }
-        ]
-    });
+    console.error(
+        "[Irys] Uploading data..."
+    );
 
-    console.error("[Irys] Upload completed.");
-    console.log(`${config.irysGatewayUrl}/${receipt.id}`);
+    const receipt =
+        await irys.upload(data, {
+            tags: [
+                {
+                    name: "Content-Type",
+                    value: getContentType(filePath)
+                },
+                {
+                    name: "App-Name",
+                    value: config.appName
+                },
+                {
+                    name: "Storage-Layer",
+                    value: "Irys"
+                }
+            ]
+        });
+
+    console.error(
+        "[Irys] Upload completed."
+    );
+
+    return `${config.irysGatewayUrl}/${receipt.id}`;
 }
 
 // Derives the Content-Type tag from the file extension.
-function getContentType(filePath: string): string {
+function getContentType(
+    filePath: string
+): string {
 
-    const ext = path.extname(filePath).toLowerCase();
+    const ext =
+        path.extname(filePath)
+            .toLowerCase();
 
     switch (ext) {
 
@@ -136,8 +175,42 @@ function getContentType(filePath: string): string {
     }
 }
 
-main().catch((error) => {
-    console.error("Irys upload failed:");
-    console.error(error);
-    process.exit(1);
-});
+// CLI wrapper.
+async function main(): Promise<void> {
+
+    const filePath =
+        process.argv[2];
+
+    const walletPath =
+        process.argv[3];
+
+    if (!filePath) {
+
+        console.error(
+            "Usage: npx tsx scripts/uploadToIrys.ts <filePath> [walletPath]"
+        );
+
+        process.exit(1);
+    }
+
+    const uri =
+        await uploadFile(
+            filePath,
+            walletPath
+        );
+
+    console.log(uri);
+}
+
+const isExecutedDirectly =
+    process.argv[1] &&
+    path.resolve(process.argv[1]) ===
+    path.resolve(new URL(import.meta.url).pathname);
+
+if (isExecutedDirectly) {
+    main().catch((error) => {
+        console.error("Irys upload failed:");
+        console.error(error);
+        process.exit(1);
+    });
+}

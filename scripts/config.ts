@@ -10,16 +10,24 @@ export type AppConfig = {
     symbol: string;
     sellerFeePercent: number;
     network: string;
+
     rawFilesDirectory: string;
     metadataDirectory: string;
     coverDirectory: string;
     coverExtension: string;
+
     nftNameTemplate: string;
     metadataDescription: string;
+
     irysGatewayUrl: string;
     irysFundingBufferSol: string;
+
     estimatedMetadataSizeBytes: number;
     estimatedMintCostSol: string;
+
+    collectionName: string;
+    collectionDescription: string;
+    collectionCoverFile: string;
 };
 
 export type RpcConfig = {
