@@ -682,6 +682,8 @@ export function getHtml(): string {
     const logNode = document.querySelector('#log');
     const logState = document.querySelector('#logState');
 
+    let lastGrantedAccess = null;
+
     function setLog(text) {
       logNode.textContent = text;
     }
@@ -694,6 +696,18 @@ export function getHtml(): string {
       document.querySelectorAll('button').forEach((button) => {
         button.disabled = disabled;
       });
+    }
+
+    function escapeHtml(value) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+
+      return String(value ?? '').replace(/[&<>"']/g, (char) => map[char]);
     }
 
     async function uploadFile(kind, file, extraParams = {}) {
@@ -782,15 +796,37 @@ export function getHtml(): string {
           <div class="access-icon">✅</div>
           <h3>Access Granted</h3>
           <p>This wallet owns the required NFT.</p>
+
           <div class="protected-preview">
-            <strong>\${data.content?.title || 'Protected Content'}</strong>
+            <strong>\${escapeHtml(data.content?.title || 'Protected Content')}</strong>
             <span>
-              \${data.content?.message || 'Full content is now unlocked.'}
+              \${escapeHtml(data.content?.message || 'Full content is now unlocked.')}
               <br />
-              Owner: \${data.owner}
+              Owner: \${escapeHtml(data.owner)}
             </span>
           </div>
+
+          <div class="button-row">
+            <button id="openProtectedContentButton" type="button">
+              Open Protected Content
+            </button>
+          </div>
+
+          <div
+            id="protectedContentOutput"
+            class="protected-preview"
+            style="display: none;"
+          ></div>
         \`;
+
+        const openButton = result.querySelector('#openProtectedContentButton');
+
+        if (openButton) {
+          openButton.addEventListener('click', () => {
+            loadProtectedContent();
+          });
+        }
+
         return;
       }
 
@@ -802,7 +838,7 @@ export function getHtml(): string {
           <div class="protected-preview">
             <strong>Content remains locked</strong>
             <span>
-              Actual owner: \${data.owner || 'Unknown'}
+              Actual owner: \${escapeHtml(data.owner || 'Unknown')}
             </span>
           </div>
         \`;
@@ -818,6 +854,81 @@ export function getHtml(): string {
           <span>Full book / music / image access will appear here after verification.</span>
         </div>
       \`;
+    }
+
+    async function loadProtectedContent() {
+      if (!lastGrantedAccess) {
+        renderAccessResult('denied', {
+          owner: 'Access session not found. Please check NFT ownership again.'
+        });
+        return;
+      }
+
+      const output = document.querySelector('#protectedContentOutput');
+
+      if (output) {
+        output.style.display = 'block';
+        output.innerHTML = \`
+          <strong>Loading protected content...</strong>
+          <span>Please wait while ownership is verified again.</span>
+        \`;
+      }
+
+      setButtonsDisabled(true);
+
+      try {
+        const response = await fetch('/api/protected/content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lastGrantedAccess)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Protected content request failed.');
+        }
+
+        const sections = (data.content?.sections || [])
+          .map((section) => \`
+            <div class="protected-preview">
+              <strong>\${escapeHtml(section.title)}</strong>
+              <span>\${escapeHtml(section.body)}</span>
+            </div>
+          \`)
+          .join('');
+
+        if (output) {
+          output.style.display = 'block';
+          output.innerHTML = \`
+            <strong>\${escapeHtml(data.content?.title || 'Protected Content')}</strong>
+            <span>\${escapeHtml(data.content?.subtitle || '')}</span>
+
+            <div class="protected-preview">
+              <strong>NFT Verification</strong>
+              <span>
+                Wallet: \${escapeHtml(data.walletAddress)}
+                <br />
+                Mint: \${escapeHtml(data.mintAddress)}
+                <br />
+                Owner: \${escapeHtml(data.owner)}
+              </span>
+            </div>
+
+            \${sections}
+          \`;
+        }
+      } catch (error) {
+        if (output) {
+          output.style.display = 'block';
+          output.innerHTML = \`
+            <strong>Access Error</strong>
+            <span>\${escapeHtml(error.message || String(error))}</span>
+          \`;
+        }
+      } finally {
+        setButtonsDisabled(false);
+      }
     }
 
     document.querySelector('#pipelineForm').addEventListener('submit', async (event) => {
@@ -902,9 +1013,12 @@ export function getHtml(): string {
       const mintAddress = document.querySelector('#accessMintAddress').value.trim();
 
       if (!walletAddress || !mintAddress) {
+        lastGrantedAccess = null;
+
         renderAccessResult('denied', {
           owner: 'Missing wallet address or NFT mint address.'
         });
+
         return;
       }
 
@@ -924,8 +1038,19 @@ export function getHtml(): string {
           throw new Error(data.error || 'Access check failed.');
         }
 
+        if (data.allowed) {
+          lastGrantedAccess = {
+            walletAddress,
+            mintAddress
+          };
+        } else {
+          lastGrantedAccess = null;
+        }
+
         renderAccessResult(data.allowed ? 'granted' : 'denied', data);
       } catch (error) {
+        lastGrantedAccess = null;
+
         renderAccessResult('denied', {
           owner: error.message || String(error)
         });

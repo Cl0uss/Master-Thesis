@@ -48,6 +48,54 @@ function getBooleanField(
     return typeof value === "boolean" ? value : fallback;
 }
 
+async function verifyStandardNftAccess(
+    walletAddress: string,
+    mintAddress: string
+): Promise<{
+    allowed: boolean;
+    owner: string;
+}> {
+    const owner = await getNftOwner(mintAddress);
+
+    return {
+        allowed: owner === walletAddress,
+        owner
+    };
+}
+
+function buildProtectedDemoContent(
+    walletAddress: string,
+    mintAddress: string,
+    owner: string
+): Record<string, unknown> {
+    return {
+        title: "Protected Thesis Content",
+        subtitle: "Token-gated access demo for standard Solana NFT holders.",
+        nft: {
+            walletAddress,
+            mintAddress,
+            owner
+        },
+        sections: [
+            {
+                title: "Full Book Access",
+                body:
+                    "This section represents the full book/PDF content. In the final project, the public UI may show only a preview, while this protected area is available only to NFT holders."
+            },
+            {
+                title: "Music / Image Bundle Access",
+                body:
+                    "This section represents additional transmedia assets such as songs, images, or chapter bundles connected to the NFT collection."
+            },
+            {
+                title: "Access Logic",
+                body:
+                    "The backend re-checks NFT ownership before returning protected content. The user interface alone does not unlock the content."
+            }
+        ]
+    };
+}
+
 async function handleUpload(
     request: http.IncomingMessage,
     response: http.ServerResponse,
@@ -181,21 +229,76 @@ async function handleCheckNftAccess(
         return;
     }
 
-    const owner = await getNftOwner(mintAddress);
-    const allowed = owner === walletAddress;
+    const access = await verifyStandardNftAccess(
+        walletAddress,
+        mintAddress
+    );
 
     sendJson(response, {
-        allowed,
-        owner,
+        allowed: access.allowed,
+        owner: access.owner,
         walletAddress,
         mintAddress,
-        content: allowed
+        content: access.allowed
             ? {
                   title: "Protected Thesis Content",
                   message: "Access granted. This wallet owns the required NFT.",
-                  demoUrl: "/protected/full-content-demo"
+                  demoEndpoint: "/api/protected/content"
               }
             : null
+    });
+}
+
+async function handleProtectedContent(
+    request: http.IncomingMessage,
+    response: http.ServerResponse
+): Promise<void> {
+    const body = parseJsonBody(await readRequestBody(request));
+
+    const walletAddress = getStringField(body, "walletAddress").trim();
+    const mintAddress = getStringField(body, "mintAddress").trim();
+
+    if (!walletAddress) {
+        sendJson(response, { error: "Missing walletAddress." }, 400);
+        return;
+    }
+
+    if (!mintAddress) {
+        sendJson(response, { error: "Missing mintAddress." }, 400);
+        return;
+    }
+
+    const access = await verifyStandardNftAccess(
+        walletAddress,
+        mintAddress
+    );
+
+    if (!access.allowed) {
+        sendJson(
+            response,
+            {
+                allowed: false,
+                error: "Access denied. This wallet does not own the required NFT.",
+                owner: access.owner,
+                walletAddress,
+                mintAddress
+            },
+            403
+        );
+
+        return;
+    }
+
+    sendJson(response, {
+        allowed: true,
+        owner: access.owner,
+        walletAddress,
+        mintAddress,
+        content: buildProtectedDemoContent(
+            walletAddress,
+            mintAddress,
+            access.owner
+        )
     });
 }
 
@@ -282,7 +385,12 @@ async function requestListener(
             await handleCheckNftAccess(request, response);
             return;
         }
-        
+
+        if (request.method === "POST" && url.pathname === "/api/protected/content") {
+            await handleProtectedContent(request, response);
+            return;
+        }
+
         sendJson(response, { error: "Not found." }, 404);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
