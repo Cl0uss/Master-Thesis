@@ -1,44 +1,104 @@
 # Transmedia NFT Pipeline
 
-A blockchain-based application for storing digital assets on Irys, generating NFT metadata, minting NFTs on Solana, and transferring NFT ownership.
+A blockchain-based framework for transmedia digital content distribution using **Solana NFTs**, **compressed NFTs**, and **Irys decentralized storage**.
 
-The project supports both a command-line interface and a local web interface.
+The project demonstrates how digital media assets can be uploaded to decentralized storage, represented by NFTs or compressed NFTs on Solana, transferred between wallets, and used as programmable access keys for protected content.
 
----
+The project supports both:
 
-# Features
-
-* Upload digital assets to Irys
-* Generate NFT-compatible metadata
-* Mint NFTs on Solana
-* Transfer NFT ownership
-* Check NFT ownership
-* Automatic Irys funding
-* Web interface for local use
-* Command-line interface
+```text
+Command-line scripts
+Local web interface
+```
 
 ---
 
-# Requirements
+## Features
+
+Implemented features:
+
+```text
+Irys asset upload
+Irys metadata upload
+NFT-compatible metadata generation
+Standard Solana NFT minting
+Standard NFT ownership check
+Standard NFT transfer
+Standard NFT token-gated access
+Merkle Tree creation for compressed NFTs
+Compressed NFT minting
+Compressed NFT minting into collection
+Compressed NFT asset ID discovery
+Compressed NFT ownership check through Helius DAS
+Compressed NFT token-gated access
+Local web UI
+Devnet / Mainnet configuration separation
+```
+
+---
+
+## Thesis Context
+
+This project is part of a master thesis:
+
+```text
+Blockchain-based framework for transmedia digital content distribution using Solana NFTs and Irys decentralized storage.
+```
+
+The implemented proof-of-concept demonstrates two ownership-based access models:
+
+```text
+Standard NFT = baseline ownership and transfer model
+Compressed NFT = scalable distribution model for large transmedia collections
+```
+
+Simplified architecture:
+
+```text
+Digital asset
+↓
+Irys / Arweave upload
+↓
+Metadata generation
+↓
+Metadata upload to Irys
+↓
+Solana NFT or compressed NFT
+↓
+Ownership verification
+↓
+Token-gated protected content
+```
+
+---
+
+## Requirements
 
 Install the following software before running the project:
 
-* Java JDK 17 or newer
-* Node.js 20 or newer
-* npm
-* Git Bash, WSL, Linux, or macOS (for `./launch` and `./ui`)
+```text
+Java JDK 17 or newer
+Node.js 20 or newer
+npm
+Git
+Linux, macOS, WSL, or Git Bash
+```
 
 You will also need:
 
-* a Solana wallet JSON file
-* enough SOL to pay for uploads and transaction fees
-* a Solana RPC endpoint
+```text
+Solana wallet JSON file
+SOL for transaction fees
+Irys-compatible funded wallet for uploads
+Solana RPC endpoint
+Helius RPC endpoint for compressed NFT DAS queries
+```
 
 ---
 
-# Installation
+## Installation
 
-Clone the repository and install all Node.js dependencies.
+Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/Cl0uss/Master-Thesis.git
@@ -46,74 +106,115 @@ cd Master-Thesis
 npm install
 ```
 
+Run TypeScript check:
+
+```bash
+npm run typecheck
+```
+
 ---
 
-# RPC Configuration
+## Network Configuration
 
-The application requires a Solana RPC endpoint for minting NFTs, checking ownership, and transferring NFTs.
-
-The public Solana RPC endpoint is intended for development and may occasionally return timeout or rate-limit errors. A dedicated RPC provider is recommended.
-
-## Creating a Free Helius RPC
-
-1. Visit:
+The project separates Mainnet and Devnet configuration.
 
 ```text
-https://www.helius.dev
+config/
+    README.md
+    mainnet/
+        app-config.json
+        collection-config.json
+        rpc-config.example.json
+        rpc-config.json          # local secret, ignored by Git
+    devnet/
+        app-config.json
+        collection-config.json
+        cnft-config.json
+        rpc-config.example.json
+        rpc-config.json          # local secret, ignored by Git
 ```
 
-2. Create a free account.
-3. Create a new application.
-4. Select **Solana Mainnet**.
-5. Copy the generated RPC URL.
-
-It will look similar to:
-
-```text
-https://mainnet.helius-rpc.com/?api-key=YOUR_API_KEY
-```
-
-Open the RPC file for the network you want to configure:
+Real RPC files are intentionally ignored by Git:
 
 ```text
 config/mainnet/rpc-config.json
 config/devnet/rpc-config.json
 ```
 
-Set its RPC URL:
+Use the example files as templates:
+
+```text
+config/mainnet/rpc-config.example.json
+config/devnet/rpc-config.example.json
+```
+
+Example RPC config:
 
 ```json
 {
-    "rpcUrl": "https://mainnet.helius-rpc.com/?api-key=YOUR_API_KEY"
+  "rpcUrl": "https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY"
 }
 ```
 
-Network RPC config files are ignored by Git, so API keys remain private.
-
 ---
 
-# Wallet Configuration
+## Helius RPC
 
-The wallet JSON file is used to sign uploads, NFT minting, and NFT transfers.
+A dedicated RPC provider is recommended because public Solana RPC endpoints can timeout or rate-limit requests.
 
-Keep this file private.
+Helius is used in this project for:
 
-Never upload it to GitHub or share it with anyone.
-
-The wallet can be provided:
-
-* through the web interface
-* with the `--wallet` command-line option
-
-Example:
-
-```bash
-./launch picture.webp --wallet .runtime/wallets/thesis-wallet.json --mint
+```text
+Solana RPC access
+compressed NFT indexing
+DAS getAsset calls
+cNFT ownership verification
 ```
 
+Example Devnet RPC:
+
+```text
+https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+```
+
+Example Mainnet RPC:
+
+```text
+https://mainnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+```
+
+Never commit real API keys to Git.
+
 ---
 
-# Input Files
+## Wallet Configuration
+
+Wallet JSON files are used to sign:
+
+```text
+Irys uploads
+NFT minting
+NFT transfers
+cNFT minting
+Merkle Tree creation
+collection creation
+```
+
+Keep wallet files private.
+
+Never upload wallet JSON files to GitHub.
+
+Runtime wallet uploads are stored locally in:
+
+```text
+.runtime/wallets/
+```
+
+This directory must not be committed.
+
+---
+
+## Input Files
 
 Place source files inside:
 
@@ -135,7 +236,7 @@ Audio and PDF files require a cover image located in:
 rawFiles/covers/
 ```
 
-The cover image must have the same filename as the original asset.
+The cover image must have the same base filename as the original asset.
 
 Example:
 
@@ -149,121 +250,386 @@ rawFiles/covers/book.png
 
 ---
 
-# Web Interface
+## Local Web Interface
 
-Start the local web interface:
+Start the UI on Mainnet config:
 
 ```bash
-./ui
+npm run ui:mainnet
 ```
 
-Then open:
+Start the UI on Devnet config:
+
+```bash
+npm run ui:devnet
+```
+
+Default UI address:
 
 ```text
 http://localhost:5174
 ```
 
-If the default port is already in use:
+If the port is already in use:
 
 ```bash
-PORT=5175 ./ui
+fuser -k 5174/tcp
+npm run ui:devnet
 ```
 
-The interface allows you to:
+Or run with another port:
 
-* upload media files
-* upload a wallet JSON
-* upload cover images
-* estimate upload costs
-* upload assets to Irys
-* mint NFTs
-* check NFT ownership
-* transfer NFTs
+```bash
+PORT=5175 npm run ui:devnet
+```
+
+The web interface supports:
+
+```text
+asset upload
+wallet JSON upload
+cover image upload
+standard NFT pipeline
+standard NFT transfer
+standard NFT access check
+Merkle Tree creation
+Devnet collection creation
+cNFT mint
+cNFT mint into collection
+cNFT access check
+protected content display
+```
 
 ---
 
-# Command Line
+## Standard NFT Flow
 
-Generate metadata without minting:
+The standard NFT flow demonstrates the baseline ownership model.
 
-```bash
-./launch <filename>
+```text
+Asset upload
+↓
+Metadata generation
+↓
+Metadata upload
+↓
+Standard NFT mint
+↓
+Owner check
+↓
+NFT transfer
+↓
+Old owner loses access
+↓
+New owner gains access
 ```
 
-Example:
+Run standard pipeline without minting:
 
 ```bash
-./launch picture.webp
+./launch <filename> --network devnet
 ```
 
-Generate metadata and mint an NFT:
+Run standard pipeline with minting:
 
 ```bash
-./launch picture.webp --mint
+./launch <filename> --mint --network devnet
 ```
 
 Use a custom wallet:
 
 ```bash
-./launch picture.webp --wallet path/to/wallet.json
-```
-
-Mint using a custom wallet:
-
-```bash
-./launch picture.webp --wallet path/to/wallet.json --mint
+./launch <filename> --wallet path/to/wallet.json --mint --network devnet
 ```
 
 ---
 
-# Utility Scripts
+## Standard NFT Ownership Check
 
-Estimate upload cost:
+Check standard NFT ownership:
 
 ```bash
-npx tsx scripts/estimateCost.ts <file>
+npx tsx scripts/checkNftOwner.ts <mintAddress> --network devnet
 ```
 
-Check Irys balance:
+Example:
 
 ```bash
-npx tsx scripts/irysBalance.ts
+npx tsx scripts/checkNftOwner.ts Hc9WRxQkUKGhFAvrs12aJxtjLNrwJt6QyF7xXwTTUf5B --network devnet
 ```
 
-Check NFT ownership:
+---
+
+## Standard NFT Transfer
+
+Transfer a standard NFT:
 
 ```bash
-npx tsx scripts/checkNftOwner.ts <mintAddress>
-```
-
-Transfer an NFT:
-
-```bash
-npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet>
+npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> --network devnet
 ```
 
 Specify the owner wallet manually:
 
 ```bash
-npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> <wallet-json-path>
+npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> <wallet-json-path> --network devnet
+```
+
+Example:
+
+```bash
+npx tsx scripts/transferNft.ts \
+  Hc9WRxQkUKGhFAvrs12aJxtjLNrwJt6QyF7xXwTTUf5B \
+  5ajD9h5dx52yGkXeCKJ6hmjsS4W7UrcPdPtULxryT2eu \
+  /home/user/Desktop/thesis-wallet/thesis-wallet-devnet.json \
+  --network devnet
 ```
 
 ---
 
-# Project Structure
+## Standard NFT Token-Gated Access
+
+The backend verifies ownership before returning protected content.
+
+API endpoint:
+
+```text
+POST /api/access/check-nft
+```
+
+Example:
+
+```bash
+curl -X POST http://localhost:5174/api/access/check-nft \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "walletAddress":"WALLET_ADDRESS",
+    "mintAddress":"NFT_MINT_ADDRESS"
+  }'
+```
+
+Protected content endpoint:
+
+```text
+POST /api/protected/content
+```
+
+---
+
+## Compressed NFT Flow
+
+The compressed NFT flow demonstrates scalable content distribution.
+
+```text
+Merkle Tree
+↓
+cNFT collection
+↓
+cNFT mint into collection
+↓
+assetId discovery
+↓
+DAS ownership check
+↓
+token-gated cNFT access
+```
+
+Compressed NFTs are intended for large transmedia collections:
+
+```text
+images
+songs
+chapters
+cards
+bonus materials
+collectible fragments
+atomic content items
+```
+
+---
+
+## Create Merkle Tree
+
+Create a Merkle Tree on Devnet:
+
+```bash
+npx tsx scripts/createMerkleTree.ts --network devnet
+```
+
+The Merkle Tree address is stored in:
+
+```text
+config/devnet/cnft-config.json
+```
+
+---
+
+## Create Devnet Collection
+
+Create a Devnet collection NFT for cNFT testing:
+
+```bash
+npx tsx scripts/createDevnetCollectionNft.ts --network devnet
+```
+
+The collection address is stored in:
+
+```text
+config/devnet/collection-config.json
+```
+
+---
+
+## Mint cNFT
+
+Mint a compressed NFT:
+
+```bash
+npx tsx scripts/mintCompressedNft.ts \
+  <metadataUri> \
+  "Compressed NFT Name" \
+  "SYMBOL" \
+  --network devnet
+```
+
+---
+
+## Mint cNFT Into Collection
+
+Mint a compressed NFT into the configured Devnet collection:
+
+```bash
+npx tsx scripts/mintCompressedNftToCollection.ts \
+  <metadataUri> \
+  "Collection cNFT Name" \
+  "SYMBOL" \
+  --network devnet
+```
+
+The script prints:
+
+```text
+CNFT_MINT_STATUS=success
+ASSET_ID=<cNFT_ASSET_ID>
+MERKLE_TREE=<MERKLE_TREE_ADDRESS>
+LEAF_INDEX=<LEAF_INDEX>
+OWNER=<OWNER_WALLET>
+COLLECTION_MINT_ADDRESS=<COLLECTION_MINT>
+TRANSACTION_SIGNATURE=<TRANSACTION_SIGNATURE>
+METADATA_URI=<METADATA_URI>
+```
+
+---
+
+## cNFT Ownership Check
+
+Check compressed NFT ownership through Helius DAS:
+
+```bash
+npx tsx scripts/checkCompressedNftOwner.ts \
+  <CNFT_ASSET_ID> \
+  <WALLET_ADDRESS> \
+  --network devnet
+```
+
+Example:
+
+```bash
+npx tsx scripts/checkCompressedNftOwner.ts \
+  67vUJ3wSxfWRusp4Tshu53iovWMhg5nXQ9ECXrPpR9gs \
+  DXuExAoMpdKvYPKizMAJUm8uRvrtUTaYTkyjw698P1AC \
+  --network devnet
+```
+
+Expected positive result:
+
+```text
+CNFT_ACCESS_STATUS=granted
+ALLOWED=true
+IS_COMPRESSED=true
+```
+
+Expected negative result:
+
+```text
+CNFT_ACCESS_STATUS=denied
+ALLOWED=false
+IS_COMPRESSED=true
+```
+
+---
+
+## cNFT Token-Gated Access
+
+The backend checks compressed NFT ownership before returning protected cNFT content.
+
+API endpoint:
+
+```text
+POST /api/access/check-cnft
+```
+
+Example:
+
+```bash
+curl -X POST http://localhost:5174/api/access/check-cnft \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "walletAddress":"WALLET_ADDRESS",
+    "assetId":"CNFT_ASSET_ID"
+  }'
+```
+
+Protected cNFT content endpoint:
+
+```text
+POST /api/protected/cnft-content
+```
+
+---
+
+## Demo Flow Documentation
+
+The verified demo flow is documented in:
+
+```text
+docs/demo-flow.md
+```
+
+It includes:
+
+```text
+standard NFT mint address
+standard NFT transfer transaction
+old owner / new owner access result
+cNFT asset ID
+cNFT mint transaction
+Merkle Tree
+cNFT collection
+positive and negative cNFT access tests
+```
+
+---
+
+## Project Structure
 
 ```text
 config/
     README.md
     mainnet/
         app-config.json
-        rpc-config.json
         collection-config.json
+        rpc-config.example.json
+        rpc-config.json
     devnet/
         app-config.json
-        rpc-config.json
         collection-config.json
         cnft-config.json
+        rpc-config.example.json
+        rpc-config.json
+
+docs/
+    demo-flow.md
+    network-config.md
 
 metadata/
     Generated NFT metadata
@@ -275,22 +641,82 @@ rawFiles/covers/
     Cover images
 
 scripts/
-    TypeScript utilities
+    TypeScript scripts and utilities
+
+scripts/ui/
+    UI HTML, command runner, HTTP helpers
 
 src/
-    Java application
+    Java launcher application
 
 .runtime/
-    Temporary runtime files
+    Temporary runtime files and uploaded wallets
 ```
 
 ---
 
-# Troubleshooting
+## Useful Commands
+
+Typecheck:
+
+```bash
+npm run typecheck
+```
+
+Run UI on Devnet:
+
+```bash
+npm run ui:devnet
+```
+
+Run UI on Mainnet:
+
+```bash
+npm run ui:mainnet
+```
+
+Check current UI config:
+
+```bash
+curl http://localhost:5174/api/config
+```
+
+Check standard NFT owner:
+
+```bash
+npx tsx scripts/checkNftOwner.ts <mintAddress> --network devnet
+```
+
+Check cNFT owner:
+
+```bash
+npx tsx scripts/checkCompressedNftOwner.ts <assetId> <walletAddress> --network devnet
+```
+
+---
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port `5174` is already in use:
+
+```bash
+fuser -k 5174/tcp
+npm run ui:devnet
+```
+
+Or use another port:
+
+```bash
+PORT=5175 npm run ui:devnet
+```
+
+---
 
 ### Insufficient SOL
 
-If minting fails with a message similar to:
+If minting fails with:
 
 ```text
 Transfer: insufficient lamports
@@ -313,21 +739,33 @@ fetch failed
 
 usually indicate an overloaded or slow RPC endpoint.
 
-Using a dedicated RPC provider such as Helius is recommended.
+Use a dedicated RPC provider such as Helius.
 
 ---
 
-### NFT Not Visible
+### NFT Not Visible in Wallet
 
-Some wallet applications take time to index newly minted NFTs.
+Some wallets take time to index newly minted NFTs.
 
-If the NFT is not immediately visible, verify it using:
+Verify ownership manually:
 
 ```bash
-npx tsx scripts/checkNftOwner.ts <mintAddress>
+npx tsx scripts/checkNftOwner.ts <mintAddress> --network devnet
 ```
 
 or view the mint address in Solana Explorer.
+
+---
+
+### cNFT Not Visible in Explorer Immediately
+
+Compressed NFTs may take time to appear in explorers or wallets.
+
+Use the DAS ownership check:
+
+```bash
+npx tsx scripts/checkCompressedNftOwner.ts <assetId> <walletAddress> --network devnet
+```
 
 ---
 
@@ -344,7 +782,7 @@ rawFiles/covers/lecture.png
 
 ---
 
-# Security
+## Security
 
 Do not publish:
 
@@ -352,6 +790,50 @@ Do not publish:
 config/mainnet/rpc-config.json
 config/devnet/rpc-config.json
 .runtime/wallets/*.json
+*.json wallet files
+private keys
+seed phrases
+real API keys
 ```
 
-If your wallet JSON or RPC API key is exposed, replace the API key immediately and move funds to a new wallet if necessary.
+If a wallet JSON or RPC API key is exposed:
+
+```text
+replace the API key immediately
+move funds to a new wallet if necessary
+remove the secret from Git history if it was committed
+```
+
+---
+
+## Current Technical Status
+
+Implemented and verified:
+
+```text
+Irys asset upload
+Irys metadata upload
+standard NFT minting
+standard NFT transfer
+standard NFT ownership check
+standard NFT token-gated access
+Merkle Tree creation
+compressed NFT minting
+compressed NFT minting into collection
+compressed NFT asset ID discovery
+compressed NFT ownership check through Helius DAS
+compressed NFT token-gated access
+local UI for standard NFT and cNFT flows
+Devnet / Mainnet config separation
+RPC secrets excluded from Git
+```
+
+Remaining improvements:
+
+```text
+fix standard NFT Devnet collection verification
+add final metadata hierarchy fields
+add UI copy buttons
+add final thesis screenshots
+polish final thesis demo scenario
+```
