@@ -11,11 +11,14 @@ import {
 } from "@metaplex-foundation/umi";
 
 import {
+    findLeafAssetIdPda,
     mintV1,
     mplBubblegum,
+    parseLeafFromMintV1Transaction,
     TokenProgramVersion,
     TokenStandard
 } from "@metaplex-foundation/mpl-bubblegum";
+
 import {
     getNetworkFromArgs,
     loadAppConfig,
@@ -29,6 +32,7 @@ async function main(): Promise<void> {
     const cliArgs = process.argv.slice(2);
     const network = getNetworkFromArgs(cliArgs, "devnet");
     const positionalArgs = removeNetworkArgs(cliArgs);
+
     const metadataUri = positionalArgs[0];
     const appConfig = loadAppConfig(network);
     const name = positionalArgs[1] ?? "Compressed NFT";
@@ -43,8 +47,8 @@ async function main(): Promise<void> {
 
     const rpcUrl = loadRpcConfig(network).rpcUrl;
     const walletPath = resolveConfigPath(appConfig.walletPath);
-
     const cnftConfig = loadCnftConfig(network);
+    const merkleTree = publicKey(cnftConfig.merkleTree);
 
     console.log("[cNFT] Network:", network);
     console.log("[cNFT] Using RPC:", rpcUrl);
@@ -66,7 +70,7 @@ async function main(): Promise<void> {
     const result = await mintV1(umi, {
         leafOwner: umi.identity.publicKey,
         leafDelegate: umi.identity.publicKey,
-        merkleTree: publicKey(cnftConfig.merkleTree),
+        merkleTree,
         payer: umi.identity,
         treeCreatorOrDelegate: umi.identity,
         metadata: {
@@ -93,10 +97,32 @@ async function main(): Promise<void> {
 
     const signature = bs58.encode(result.signature);
 
+    console.log("[cNFT] Mint transaction confirmed.");
+    console.log("[cNFT] Parsing minted leaf from transaction...");
+
+    const leaf = await parseLeafFromMintV1Transaction(umi, result.signature);
+
+    const assetId = findLeafAssetIdPda(umi, {
+        merkleTree,
+        leafIndex: leaf.nonce
+    })[0];
+
     console.log("[cNFT] Mint completed.");
     console.log("Transaction:", signature);
+    console.log("Asset ID:", assetId);
+
     const clusterQuery = network === "devnet" ? "?cluster=devnet" : "";
+
     console.log(`Explorer: https://explorer.solana.com/tx/${signature}${clusterQuery}`);
+    console.log(`Asset Explorer: https://explorer.solana.com/address/${assetId}${clusterQuery}`);
+
+    console.log(`CNFT_MINT_STATUS=success`);
+    console.log(`ASSET_ID=${assetId}`);
+    console.log(`MERKLE_TREE=${merkleTree}`);
+    console.log(`LEAF_INDEX=${leaf.nonce}`);
+    console.log(`OWNER=${umi.identity.publicKey}`);
+    console.log(`TRANSACTION_SIGNATURE=${signature}`);
+    console.log(`METADATA_URI=${metadataUri}`);
 }
 
 main().catch((error) => {
