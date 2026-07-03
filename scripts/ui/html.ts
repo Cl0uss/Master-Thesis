@@ -674,6 +674,61 @@ export function getHtml(): string {
           </div>
         </div>
       </div>
+
+      <div class="panel wide">
+        <div class="panel-header">
+          <p class="panel-kicker">Compressed Access Layer</p>
+          <h2>Compressed NFT Access</h2>
+          <p class="panel-description">
+            Verify whether a wallet owns a compressed NFT asset through Helius DAS.
+            If ownership is confirmed, protected cNFT thesis content becomes available.
+          </p>
+        </div>
+
+        <div class="panel-body">
+          <div class="access-grid">
+            <div class="stack">
+              <div class="field">
+                <label for="cnftAccessWalletAddress">Wallet Address</label>
+                <input
+                  id="cnftAccessWalletAddress"
+                  type="text"
+                  placeholder="Owner wallet address"
+                />
+              </div>
+
+              <div class="field">
+                <label for="cnftAccessAssetId">cNFT Asset ID</label>
+                <input
+                  id="cnftAccessAssetId"
+                  type="text"
+                  placeholder="Compressed NFT asset id"
+                />
+                <div class="hint">
+                  Example: 67vUJ3wSxfWRusp4Tshu53iovWMhg5nXQ9ECXrPpR9gs
+                </div>
+              </div>
+
+              <div class="button-row">
+                <button id="checkCnftAccessButton" type="button">Check cNFT Access</button>
+              </div>
+            </div>
+
+            <div id="cnftAccessResult" class="access-result locked">
+              <div class="access-icon">🌳</div>
+              <h3>Compressed Content Locked</h3>
+              <p>
+                Enter a wallet address and cNFT asset id to verify compressed NFT ownership.
+              </p>
+
+              <div class="protected-preview">
+                <strong>Demo protected cNFT content</strong>
+                <span>Scalable transmedia content access will appear here after verification.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="panel log-panel">
@@ -690,6 +745,7 @@ export function getHtml(): string {
     const logState = document.querySelector('#logState');
 
     let lastGrantedAccess = null;
+    let lastGrantedCnftAccess = null;
 
     function setLog(text) {
       logNode.textContent = text;
@@ -923,6 +979,155 @@ export function getHtml(): string {
       }
     }
 
+    function renderCnftAccessResult(state, data) {
+      const result = document.querySelector('#cnftAccessResult');
+
+      result.classList.remove('locked', 'checking', 'granted', 'denied');
+      result.classList.add(state);
+
+      if (state === 'checking') {
+        result.innerHTML =
+          '<div class="access-icon">⏳</div>' +
+          '<h3>Checking cNFT Ownership</h3>' +
+          '<p>Please wait while the backend checks the compressed NFT owner through Helius DAS.</p>' +
+          '<div class="protected-preview">' +
+          '<strong>Verification in progress</strong>' +
+          '<span>cNFT access decision will appear here.</span>' +
+          '</div>';
+        return;
+      }
+
+      if (state === 'granted') {
+        result.innerHTML =
+          '<div class="access-icon">✅</div>' +
+          '<h3>cNFT Access Granted</h3>' +
+          '<p>This wallet owns the required compressed NFT.</p>' +
+          '<div class="protected-preview">' +
+          '<strong>' + escapeHtml(data?.content?.title || 'Protected cNFT Content') + '</strong>' +
+          '<span>' +
+          escapeHtml(data?.content?.message || 'Compressed NFT content is now unlocked.') +
+          '<br />Owner: ' + escapeHtml(data?.owner || '') +
+          '<br />Asset ID: ' + escapeHtml(data?.assetId || '') +
+          '<br />Tree: ' + escapeHtml(data?.tree || '') +
+          '<br />Leaf ID: ' + escapeHtml(data?.leafId || '') +
+          '</span>' +
+          '</div>' +
+          '<div class="button-row">' +
+          '<button id="openProtectedCnftContentButton" type="button">Open Protected cNFT Content</button>' +
+          '</div>' +
+          '<div id="protectedCnftContentOutput" class="protected-preview" style="display: none;"></div>';
+
+        const openButton = result.querySelector('#openProtectedCnftContentButton');
+
+        if (openButton) {
+          openButton.addEventListener('click', function() {
+            loadProtectedCnftContent();
+          });
+        }
+
+        return;
+      }
+
+      if (state === 'denied') {
+        result.innerHTML =
+          '<div class="access-icon">⛔</div>' +
+          '<h3>cNFT Access Denied</h3>' +
+          '<p>This wallet does not own the required compressed NFT.</p>' +
+          '<div class="protected-preview">' +
+          '<strong>Compressed content remains locked</strong>' +
+          '<span>' +
+          'Actual owner: ' + escapeHtml(data?.owner || 'Unknown') +
+          '<br />Asset ID: ' + escapeHtml(data?.assetId || '') +
+          '</span>' +
+          '</div>';
+        return;
+      }
+
+      result.innerHTML =
+        '<div class="access-icon">🌳</div>' +
+        '<h3>Compressed Content Locked</h3>' +
+        '<p>Enter a wallet address and cNFT asset id to verify compressed NFT ownership.</p>' +
+        '<div class="protected-preview">' +
+        '<strong>Demo protected cNFT content</strong>' +
+        '<span>Scalable transmedia content access will appear here after verification.</span>' +
+        '</div>';
+    }
+
+    async function loadProtectedCnftContent() {
+      if (!lastGrantedCnftAccess) {
+        renderCnftAccessResult('denied', {
+          owner: 'cNFT access session not found. Please check cNFT ownership again.'
+        });
+        return;
+      }
+
+      const output = document.querySelector('#protectedCnftContentOutput');
+
+      if (output) {
+        output.style.display = 'block';
+        output.innerHTML =
+          '<strong>Loading protected cNFT content...</strong>' +
+          '<span>Please wait while compressed NFT ownership is verified again.</span>';
+      }
+
+      setButtonsDisabled(true);
+
+      try {
+        const response = await fetch('/api/protected/cnft-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lastGrantedCnftAccess)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Protected cNFT content request failed.');
+        }
+
+        const sections = (data.content?.sections || [])
+          .map(function(section) {
+            return (
+              '<div class="protected-preview">' +
+              '<strong>' + escapeHtml(section.title) + '</strong>' +
+              '<span>' + escapeHtml(section.body) + '</span>' +
+              '</div>'
+            );
+          })
+          .join('');
+
+        if (output) {
+          output.style.display = 'block';
+          output.innerHTML =
+            '<strong>' + escapeHtml(data.content?.title || 'Protected cNFT Content') + '</strong>' +
+            '<span>' + escapeHtml(data.content?.subtitle || '') + '</span>' +
+            '<div class="protected-preview">' +
+            '<strong>cNFT Verification</strong>' +
+            '<span>' +
+            'Wallet: ' + escapeHtml(data.walletAddress) +
+            '<br />Asset ID: ' + escapeHtml(data.assetId) +
+            '<br />Owner: ' + escapeHtml(data.owner) +
+            '<br />Tree: ' + escapeHtml(data.tree) +
+            '<br />Leaf ID: ' + escapeHtml(data.leafId) +
+            '<br />Name: ' + escapeHtml(data.name) +
+            '<br />Symbol: ' + escapeHtml(data.symbol) +
+            '<br />Metadata URI: ' + escapeHtml(data.metadataUri) +
+            '</span>' +
+            '</div>' +
+            sections;
+        }
+      } catch (error) {
+        if (output) {
+          output.style.display = 'block';
+          output.innerHTML =
+            '<strong>cNFT Access Error</strong>' +
+            '<span>' + escapeHtml(error.message || String(error)) + '</span>';
+        }
+      } finally {
+        setButtonsDisabled(false);
+      }
+    }
+
     async function transferNftOwnership() {
       const mintAddress = document.querySelector('#transferMintAddress').value.trim();
       const destinationWallet = document.querySelector('#transferDestinationWallet').value.trim();
@@ -1099,6 +1304,62 @@ export function getHtml(): string {
 
         renderAccessResult('denied', {
           owner: error.message || String(error)
+        });
+      } finally {
+        setButtonsDisabled(false);
+      }
+    });
+
+    document.querySelector('#checkCnftAccessButton').addEventListener('click', async function() {
+      const walletAddress = document.querySelector('#cnftAccessWalletAddress').value.trim();
+      const assetId = document.querySelector('#cnftAccessAssetId').value.trim();
+
+      if (!walletAddress || !assetId) {
+        lastGrantedCnftAccess = null;
+
+        renderCnftAccessResult('denied', {
+          owner: 'Missing wallet address or cNFT asset id.',
+          assetId: assetId
+        });
+
+        return;
+      }
+
+      setButtonsDisabled(true);
+      renderCnftAccessResult('checking');
+
+      try {
+        const response = await fetch('/api/access/check-cnft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: walletAddress,
+            assetId: assetId
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'cNFT access check failed.');
+        }
+
+        if (data.allowed) {
+          lastGrantedCnftAccess = {
+            walletAddress: walletAddress,
+            assetId: assetId
+          };
+        } else {
+          lastGrantedCnftAccess = null;
+        }
+
+        renderCnftAccessResult(data.allowed ? 'granted' : 'denied', data);
+      } catch (error) {
+        lastGrantedCnftAccess = null;
+
+        renderCnftAccessResult('denied', {
+          owner: error.message || String(error),
+          assetId: assetId
         });
       } finally {
         setButtonsDisabled(false);

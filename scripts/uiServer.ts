@@ -7,6 +7,7 @@ import { getNftOwner } from "./checkNftOwner.js";
 import {
     getNetworkFromArgs,
     loadAppConfig,
+    loadRpcConfig,
     resolveConfigPath
 } from "./config.js";
 import { getHtml } from "./ui/html.js";
@@ -22,6 +23,44 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const port = Number(process.env.PORT ?? 5174);
 const network = getNetworkFromArgs(process.argv.slice(2));
+
+type CompressedNftAccessResult = {
+    allowed: boolean;
+    owner: string;
+    assetId: string;
+    walletAddress: string;
+    isCompressed: boolean;
+    tree: string;
+    leafId: string;
+    name: string;
+    symbol: string;
+    metadataUri: string;
+};
+
+type HeliusAssetResponse = {
+    result?: {
+        id?: string;
+        content?: {
+            json_uri?: string;
+            metadata?: {
+                name?: string;
+                symbol?: string;
+            };
+        };
+        ownership?: {
+            owner?: string;
+        };
+        compression?: {
+            compressed?: boolean;
+            tree?: string;
+            leaf_id?: number;
+        };
+    };
+    error?: {
+        code: number;
+        message: string;
+    };
+};
 
 function ensureDirectory(directoryPath: string): void {
     fs.mkdirSync(directoryPath, { recursive: true });
@@ -53,6 +92,10 @@ function getBooleanField(
     return typeof value === "boolean" ? value : fallback;
 }
 
+function isProbablyPublicKey(value: string): boolean {
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
+}
+
 async function verifyStandardNftAccess(
     walletAddress: string,
     mintAddress: string
@@ -65,6 +108,81 @@ async function verifyStandardNftAccess(
     return {
         allowed: owner === walletAddress,
         owner
+    };
+}
+
+async function getHeliusAsset(assetId: string): Promise<HeliusAssetResponse> {
+    const rpcUrl = loadRpcConfig(network).rpcUrl;
+
+    const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "ui-check-cnft-owner",
+            method: "getAsset",
+            params: {
+                id: assetId
+            }
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            `Helius DAS request failed with HTTP ${response.status}: ${await response.text()}`
+        );
+    }
+
+    return (await response.json()) as HeliusAssetResponse;
+}
+
+async function verifyCompressedNftAccess(
+    walletAddress: string,
+    assetId: string
+): Promise<CompressedNftAccessResult> {
+    if (!isProbablyPublicKey(assetId)) {
+        throw new Error(
+            "Invalid cNFT Asset ID. Use only the cNFT asset address, not a Solana Explorer URL."
+        );
+    }
+
+    if (!isProbablyPublicKey(walletAddress)) {
+        throw new Error(
+            "Invalid wallet address. Use only the wallet public key, not a Solana Explorer URL."
+        );
+    }
+
+    const asset = await getHeliusAsset(assetId);
+
+    if (asset.error) {
+        throw new Error(`Helius DAS error ${asset.error.code}: ${asset.error.message}`);
+    }
+
+    if (!asset.result) {
+        throw new Error("Helius DAS returned no asset result.");
+    }
+
+    const owner = asset.result.ownership?.owner;
+
+    if (!owner) {
+        throw new Error("Could not determine cNFT owner from DAS response.");
+    }
+
+    const isCompressed = asset.result.compression?.compressed === true;
+
+    return {
+        allowed: owner === walletAddress,
+        owner,
+        assetId,
+        walletAddress,
+        isCompressed,
+        tree: asset.result.compression?.tree ?? "",
+        leafId: asset.result.compression?.leaf_id?.toString() ?? "",
+        name: asset.result.content?.metadata?.name ?? "",
+        symbol: asset.result.content?.metadata?.symbol ?? "",
+        metadataUri: asset.result.content?.json_uri ?? ""
     };
 }
 
@@ -96,6 +214,42 @@ function buildProtectedDemoContent(
                 title: "Access Logic",
                 body:
                     "The backend re-checks NFT ownership before returning protected content. The user interface alone does not unlock the content."
+            }
+        ]
+    };
+}
+
+function buildProtectedCompressedNftContent(
+    access: CompressedNftAccessResult
+): Record<string, unknown> {
+    return {
+        title: "Protected cNFT Thesis Content",
+        subtitle: "Token-gated access demo for compressed NFT holders.",
+        cnft: {
+            walletAddress: access.walletAddress,
+            assetId: access.assetId,
+            owner: access.owner,
+            tree: access.tree,
+            leafId: access.leafId,
+            name: access.name,
+            symbol: access.symbol,
+            metadataUri: access.metadataUri
+        },
+        sections: [
+            {
+                title: "Compressed NFT Access",
+                body:
+                    "This content is unlocked because the requested wallet owns the compressed NFT asset."
+            },
+            {
+                title: "Scalable Distribution Model",
+                body:
+                    "Compressed NFTs are used as a scalable model for distributing many transmedia items such as images, music, chapters, or collectible fragments."
+            },
+            {
+                title: "DAS Ownership Verification",
+                body:
+                    "The backend verifies compressed NFT ownership through the Helius DAS getAsset method before returning protected content."
             }
         ]
     };
@@ -258,6 +412,48 @@ async function handleCheckNftAccess(
     });
 }
 
+async function handleCheckCompressedNftAccess(
+    request: http.IncomingMessage,
+    response: http.ServerResponse
+): Promise<void> {
+    const body = parseJsonBody(await readRequestBody(request));
+
+    const walletAddress = getStringField(body, "walletAddress").trim();
+    const assetId = getStringField(body, "assetId").trim();
+
+    if (!walletAddress) {
+        sendJson(response, { error: "Missing walletAddress." }, 400);
+        return;
+    }
+
+    if (!assetId) {
+        sendJson(response, { error: "Missing assetId." }, 400);
+        return;
+    }
+
+    const access = await verifyCompressedNftAccess(walletAddress, assetId);
+
+    sendJson(response, {
+        allowed: access.allowed,
+        owner: access.owner,
+        walletAddress,
+        assetId,
+        isCompressed: access.isCompressed,
+        tree: access.tree,
+        leafId: access.leafId,
+        name: access.name,
+        symbol: access.symbol,
+        metadataUri: access.metadataUri,
+        content: access.allowed
+            ? {
+                  title: "Protected cNFT Thesis Content",
+                  message: "Access granted. This wallet owns the required compressed NFT.",
+                  demoEndpoint: "/api/protected/cnft-content"
+              }
+            : null
+    });
+}
+
 async function handleProtectedContent(
     request: http.IncomingMessage,
     response: http.ServerResponse
@@ -308,6 +504,58 @@ async function handleProtectedContent(
             mintAddress,
             access.owner
         )
+    });
+}
+
+async function handleProtectedCompressedNftContent(
+    request: http.IncomingMessage,
+    response: http.ServerResponse
+): Promise<void> {
+    const body = parseJsonBody(await readRequestBody(request));
+
+    const walletAddress = getStringField(body, "walletAddress").trim();
+    const assetId = getStringField(body, "assetId").trim();
+
+    if (!walletAddress) {
+        sendJson(response, { error: "Missing walletAddress." }, 400);
+        return;
+    }
+
+    if (!assetId) {
+        sendJson(response, { error: "Missing assetId." }, 400);
+        return;
+    }
+
+    const access = await verifyCompressedNftAccess(walletAddress, assetId);
+
+    if (!access.allowed) {
+        sendJson(
+            response,
+            {
+                allowed: false,
+                error: "Access denied. This wallet does not own the required compressed NFT.",
+                owner: access.owner,
+                walletAddress,
+                assetId
+            },
+            403
+        );
+
+        return;
+    }
+
+    sendJson(response, {
+        allowed: true,
+        owner: access.owner,
+        walletAddress,
+        assetId,
+        isCompressed: access.isCompressed,
+        tree: access.tree,
+        leafId: access.leafId,
+        name: access.name,
+        symbol: access.symbol,
+        metadataUri: access.metadataUri,
+        content: buildProtectedCompressedNftContent(access)
     });
 }
 
@@ -432,8 +680,18 @@ async function requestListener(
             return;
         }
 
+        if (request.method === "POST" && url.pathname === "/api/access/check-cnft") {
+            await handleCheckCompressedNftAccess(request, response);
+            return;
+        }
+
         if (request.method === "POST" && url.pathname === "/api/protected/content") {
             await handleProtectedContent(request, response);
+            return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/protected/cnft-content") {
+            await handleProtectedCompressedNftContent(request, response);
             return;
         }
 
