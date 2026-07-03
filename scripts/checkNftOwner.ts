@@ -1,13 +1,20 @@
 import fs from "node:fs";
 import { Connection, PublicKey } from "@solana/web3.js";
+import {
+    getNetworkFromArgs,
+    loadRpcConfig,
+    removeNetworkArgs,
+    type Network
+} from "./config.js";
 
-function resolveRpcUrl(arg?: string): string {
+export type NftOwnerOptions = {
+    network?: Network;
+    rpcUrl?: string;
+};
+
+function resolveRpcUrl(arg?: string, network: Network = "mainnet"): string {
     if (!arg) {
-        const config = JSON.parse(
-            fs.readFileSync("config/rpc-config.json", "utf8")
-        );
-
-        return config.rpcUrl;
+        return loadRpcConfig(network).rpcUrl;
     }
 
     if (arg.startsWith("http")) {
@@ -53,9 +60,13 @@ async function withRetry<T>(
 
 export async function getNftOwner(
     mintAddress: string,
-    rpcUrlArg?: string
+    rpcUrlOrOptions?: string | NftOwnerOptions
 ): Promise<string> {
-    const rpcUrl = resolveRpcUrl(rpcUrlArg);
+    const options = typeof rpcUrlOrOptions === "string"
+        ? { rpcUrl: rpcUrlOrOptions }
+        : rpcUrlOrOptions ?? {};
+    const network = options.network ?? getNetworkFromArgs([]);
+    const rpcUrl = resolveRpcUrl(options.rpcUrl, network);
 
     const connection = new Connection(
         rpcUrl,
@@ -102,12 +113,18 @@ export async function getNftOwner(
 }
 
 async function main(): Promise<void> {
-    const mintAddress = process.argv[2];
-    const rpcUrl = process.argv[3];
+    const cliArgs = process.argv.slice(2);
+    const network = getNetworkFromArgs(cliArgs);
+    const positionalArgs = removeNetworkArgs(cliArgs);
+    const mintAddress = positionalArgs[0];
+    const rpcUrl = positionalArgs[1];
 
     if (!mintAddress) {
         console.error(
-            "Usage: npx tsx scripts/checkNftOwner.ts <mintAddress> [rpcUrl|rpcConfigPath]"
+            "Usage:\n" +
+            "  npx tsx scripts/checkNftOwner.ts <mintAddress>\n" +
+            "  npx tsx scripts/checkNftOwner.ts <mintAddress> --network devnet\n" +
+            "  npx tsx scripts/checkNftOwner.ts <mintAddress> <rpcUrl>"
         );
 
         process.exit(1);
@@ -115,7 +132,7 @@ async function main(): Promise<void> {
 
     console.log(
         "[Owner check] Using RPC:",
-        resolveRpcUrl(rpcUrl)
+        resolveRpcUrl(rpcUrl, network)
     );
 
     console.log(
@@ -125,7 +142,7 @@ async function main(): Promise<void> {
 
     const owner = await getNftOwner(
         mintAddress,
-        rpcUrl
+        { network, rpcUrl }
     );
 
     console.log("NFT found.");

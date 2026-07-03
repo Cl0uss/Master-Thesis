@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import bs58 from "bs58";
 
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
@@ -19,45 +18,64 @@ import {
     some
 } from "@metaplex-foundation/umi";
 
-import { loadConfig, loadRpcConfig, resolveConfigPath } from "./config.js";
+import {
+    getNetworkFromArgs,
+    loadAppConfig,
+    loadCollectionConfig,
+    loadRpcConfig,
+    removeNetworkArgs,
+    resolveConfigPath
+} from "./config.js";
 
-type CollectionConfig = {
-    collectionMintAddress?: string;
-};
-
-function loadCollectionConfig(): CollectionConfig {
-    const collectionConfigPath = path.join(
-        process.cwd(),
-        "config",
-        "collection-config.json"
+function removeMintFlags(args: string[]): string[] {
+    return args.filter((arg) =>
+        arg !== "--allow-unverified-collection" &&
+        arg !== "--skip-collection-verification"
     );
-
-    if (!fs.existsSync(collectionConfigPath)) {
-        return {};
-    }
-
-    return JSON.parse(fs.readFileSync(collectionConfigPath, "utf8"));
 }
 
 async function main(): Promise<void> {
-    const config = loadConfig();
-    const rpcConfig = loadRpcConfig();
-    const collectionConfig = loadCollectionConfig();
+    const cliArgs = process.argv.slice(2);
 
-    const metadataUri = process.argv[2];
-    const nftName = process.argv[3];
-    const walletPath = process.argv[4] ?? resolveConfigPath(config.walletPath);
-    const symbol = process.argv[5] ?? config.symbol;
-    const rpcUrl = process.argv[6] ?? rpcConfig.rpcUrl;
-    const sellerFeePercent = Number(process.argv[7] ?? config.sellerFeePercent);
+    const network = getNetworkFromArgs(cliArgs);
+    const allowUnverifiedCollection = cliArgs.includes("--allow-unverified-collection");
+    const skipCollectionVerification = cliArgs.includes("--skip-collection-verification");
+
+    const argsWithoutMintFlags = removeMintFlags(cliArgs);
+    const positionalArgs = removeNetworkArgs(argsWithoutMintFlags);
+
+    const config = loadAppConfig(network);
+    const rpcConfig = loadRpcConfig(network);
+    const collectionConfig = loadCollectionConfig(network);
+
+    const metadataUri = positionalArgs[0];
+    const nftName = positionalArgs[1];
+    const walletPath = positionalArgs[2] ?? resolveConfigPath(config.walletPath);
+    const symbol = positionalArgs[3] ?? config.symbol;
+    const rpcUrl = positionalArgs[4] ?? rpcConfig.rpcUrl;
+    const sellerFeePercent = Number(positionalArgs[5] ?? config.sellerFeePercent);
 
     if (!metadataUri || !nftName) {
         console.error(
-            "Usage: npx tsx scripts/mintNft.ts <metadataUri> <nftName> [walletPath] [symbol] [rpcUrl] [sellerFeePercent]"
+            "Usage:\n" +
+            "  npx tsx scripts/mintNft.ts <metadataUri> <nftName> [walletPath] [symbol] [rpcUrl] [sellerFeePercent]\n" +
+            "  npx tsx scripts/mintNft.ts <metadataUri> <nftName> --network devnet\n" +
+            "  npx tsx scripts/mintNft.ts <metadataUri> <nftName> --network devnet --skip-collection-verification\n" +
+            "  npx tsx scripts/mintNft.ts <metadataUri> <nftName> --network devnet --allow-unverified-collection"
         );
         process.exit(1);
     }
 
+    if (skipCollectionVerification && allowUnverifiedCollection) {
+        console.error(
+            "[Solana] Both --skip-collection-verification and --allow-unverified-collection were provided."
+        );
+        console.error(
+            "[Solana] Collection verification will be skipped completely."
+        );
+    }
+
+    console.error(`[Solana] Network: ${network}`);
     console.error(`[Solana] RPC URL: ${rpcUrl}`);
     console.error(`[Solana] Reading wallet: ${walletPath}`);
 
@@ -83,7 +101,7 @@ async function main(): Promise<void> {
     if (collectionMintAddress) {
         console.error(`[Solana] Collection: ${collectionMintAddress}`);
     } else {
-        console.error("[Solana] No collection-config.json collection address found. Minting without collection.");
+        console.error(`[Solana] No collection address found for ${network}. Minting without collection.`);
     }
 
     const createInput: Parameters<typeof createNft>[1] = {
@@ -110,36 +128,58 @@ async function main(): Promise<void> {
     console.log(`TRANSACTION_SIGNATURE=${signature}`);
 
     let verificationSignature: string | null = null;
+    let verificationFailed = false;
+    let verificationSkipped = false;
 
-    if (collectionMintAddress) {
+    if (collectionMintAddress && skipCollectionVerification) {
+        verificationSkipped = true;
+        console.error("[Solana] Collection verification skipped by --skip-collection-verification.");
+    }
+
+    if (collectionMintAddress && !skipCollectionVerification) {
         console.error("[Solana] Verifying NFT collection...");
 
-        const metadata = findMetadataPda(umi, {
-            mint: mint.publicKey
-        });
+        try {
+            const metadata = findMetadataPda(umi, {
+                mint: mint.publicKey
+            });
 
-        const collectionMint = publicKey(collectionMintAddress);
+            const collectionMint = publicKey(collectionMintAddress);
 
-        const collectionMetadata = findMetadataPda(umi, {
-            mint: collectionMint
-        });
+            const collectionMetadata = findMetadataPda(umi, {
+                mint: collectionMint
+            });
 
-        const collectionMasterEdition = findMasterEditionPda(umi, {
-            mint: collectionMint
-        });
+            const collectionMasterEdition = findMasterEditionPda(umi, {
+                mint: collectionMint
+            });
 
-        const verifyResult = await verifySizedCollectionItem(umi, {
-            metadata,
-            collectionAuthority: umi.identity,
-            payer: umi.identity,
-            collectionMint,
-            collection: collectionMetadata,
-            collectionMasterEditionAccount: collectionMasterEdition
-        }).sendAndConfirm(umi);
+            const verifyResult = await verifySizedCollectionItem(umi, {
+                metadata,
+                collectionAuthority: umi.identity,
+                payer: umi.identity,
+                collectionMint,
+                collection: collectionMetadata,
+                collectionMasterEditionAccount: collectionMasterEdition
+            }).sendAndConfirm(umi);
 
-        verificationSignature = bs58.encode(verifyResult.signature);
+            verificationSignature = bs58.encode(verifyResult.signature);
 
-        console.error("[Solana] Collection verified.");
+            console.error("[Solana] Collection verified.");
+        } catch (error) {
+            verificationFailed = true;
+
+            if (!allowUnverifiedCollection) {
+                throw error;
+            }
+
+            const message = error instanceof Error ? error.message : String(error);
+
+            console.error(
+                "[Solana] WARNING: NFT minted successfully, but collection verification failed."
+            );
+            console.error(`[Solana] Verification error: ${message}`);
+        }
     }
 
     if (collectionMintAddress) {
@@ -148,6 +188,21 @@ async function main(): Promise<void> {
 
     if (verificationSignature) {
         console.log(`COLLECTION_VERIFICATION_SIGNATURE=${verificationSignature}`);
+        console.log("COLLECTION_VERIFICATION_STATUS=verified");
+    }
+
+    if (verificationFailed) {
+        console.log("COLLECTION_VERIFICATION_STATUS=failed");
+    }
+
+    if (verificationSkipped) {
+        console.log("COLLECTION_VERIFICATION_STATUS=skipped");
+    }
+
+    if (verificationFailed && allowUnverifiedCollection) {
+        console.log("NFT_MINT_STATUS=success_with_unverified_collection");
+    } else {
+        console.log("NFT_MINT_STATUS=success");
     }
 }
 

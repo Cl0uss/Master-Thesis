@@ -73,13 +73,14 @@ It will look similar to:
 https://mainnet.helius-rpc.com/?api-key=YOUR_API_KEY
 ```
 
-Create your private configuration file:
+Open the RPC file for the network you want to configure:
 
-```bash
-cp config/rpc-config.example.json config/rpc-config.json
+```text
+config/mainnet/rpc-config.json
+config/devnet/rpc-config.json
 ```
 
-Open `config/rpc-config.json` and replace the example value:
+Set its RPC URL:
 
 ```json
 {
@@ -87,7 +88,7 @@ Open `config/rpc-config.json` and replace the example value:
 }
 ```
 
-`rpc-config.json` is ignored by Git, so your API key remains private.
+Network RPC config files are ignored by Git, so API keys remain private.
 
 ---
 
@@ -253,7 +254,16 @@ npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> <wallet-json-pa
 
 ```text
 config/
-    Application configuration
+    README.md
+    mainnet/
+        app-config.json
+        rpc-config.json
+        collection-config.json
+    devnet/
+        app-config.json
+        rpc-config.json
+        collection-config.json
+        cnft-config.json
 
 metadata/
     Generated NFT metadata
@@ -339,7 +349,8 @@ rawFiles/covers/lecture.png
 Do not publish:
 
 ```text
-config/rpc-config.json
+config/mainnet/rpc-config.json
+config/devnet/rpc-config.json
 .runtime/wallets/*.json
 ```
 

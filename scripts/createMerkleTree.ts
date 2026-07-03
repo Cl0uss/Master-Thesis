@@ -9,15 +9,22 @@ import {
 } from "@metaplex-foundation/umi";
 
 import { mplBubblegum, createTree } from "@metaplex-foundation/mpl-bubblegum";
+import {
+    getNetworkConfigDirectory,
+    getNetworkFromArgs,
+    loadAppConfig,
+    loadRpcConfig,
+    resolveConfigPath
+} from "./config.js";
 
 async function main(): Promise<void> {
 
-    const rpcUrl =
-        "https://api.devnet.solana.com";
+    const network = getNetworkFromArgs(process.argv.slice(2), "devnet");
+    const appConfig = loadAppConfig(network);
+    const rpcUrl = loadRpcConfig(network).rpcUrl;
+    const walletPath = resolveConfigPath(appConfig.walletPath);
 
-    const walletPath =
-        "/home/cl0us/Desktop/thesis-wallet/thesis-wallet-devnet.json";
-
+    console.log("[cNFT] Network:", network);
     console.log("[cNFT] Using RPC:", rpcUrl);
     console.log("[cNFT] Using wallet:", walletPath);
 
@@ -64,12 +71,12 @@ async function main(): Promise<void> {
     const configPath =
         path.join(
             process.cwd(),
-            "config",
-            "cnft-config.devnet.json"
+            getNetworkConfigDirectory(network),
+            "cnft-config.json"
         );
 
     const config = {
-        network: "devnet",
+        network,
         merkleTree:
             merkleTree.publicKey.toString(),
         createdAt:

@@ -21,48 +21,43 @@ import {
     findMasterEditionPda,
     findMetadataPda
 } from "@metaplex-foundation/mpl-token-metadata";
-
-type CnftConfig = {
-    network: string;
-    merkleTree: string;
-    createdAt: string;
-};
-
-type CollectionConfig = {
-    network: string;
-    collectionMintAddress: string;
-};
-
-function loadCnftConfig(): CnftConfig {
-    return JSON.parse(
-        fs.readFileSync("config/cnft-config.devnet.json", "utf8")
-    );
-}
-
-function loadCollectionConfig(): CollectionConfig {
-    return JSON.parse(
-        fs.readFileSync("config/collection-config.devnet.json", "utf8")
-    );
-}
+import {
+    getNetworkFromArgs,
+    loadAppConfig,
+    loadCnftConfig,
+    loadCollectionConfig,
+    loadRpcConfig,
+    removeNetworkArgs,
+    resolveConfigPath
+} from "./config.js";
 
 async function main(): Promise<void> {
-    const metadataUri = process.argv[2];
-    const name = process.argv[3] ?? "Compressed NFT";
-    const symbol = process.argv[4] ?? "TMDC";
+    const cliArgs = process.argv.slice(2);
+    const network = getNetworkFromArgs(cliArgs, "devnet");
+    const positionalArgs = removeNetworkArgs(cliArgs);
+    const metadataUri = positionalArgs[0];
+    const appConfig = loadAppConfig(network);
+    const name = positionalArgs[1] ?? "Compressed NFT";
+    const symbol = positionalArgs[2] ?? appConfig.symbol;
 
     if (!metadataUri) {
         console.error(
-            "Usage: npx tsx scripts/mintCompressedNftToCollection.ts <metadataUri> [name] [symbol]"
+            "Usage: npx tsx scripts/mintCompressedNftToCollection.ts <metadataUri> [name] [symbol] [--network devnet|mainnet]"
         );
         process.exit(1);
     }
 
-    const rpcUrl = "https://api.devnet.solana.com";
-    const walletPath = "/home/cl0us/Desktop/thesis-wallet/thesis-wallet-devnet.json";
+    const rpcUrl = loadRpcConfig(network).rpcUrl;
+    const walletPath = resolveConfigPath(appConfig.walletPath);
 
-    const cnftConfig = loadCnftConfig();
-    const collectionConfig = loadCollectionConfig();
+    const cnftConfig = loadCnftConfig(network);
+    const collectionConfig = loadCollectionConfig(network);
 
+    if (!collectionConfig.collectionMintAddress) {
+        throw new Error(`Missing collection mint address for ${network}.`);
+    }
+
+    console.log("[cNFT Collection] Network:", network);
     console.log("[cNFT Collection] Using RPC:", rpcUrl);
     console.log("[cNFT Collection] Using wallet:", walletPath);
     console.log("[cNFT Collection] Merkle Tree:", cnftConfig.merkleTree);
@@ -106,7 +101,7 @@ async function main(): Promise<void> {
             name,
             symbol,
             uri: metadataUri,
-            sellerFeeBasisPoints: 500,
+            sellerFeeBasisPoints: appConfig.sellerFeePercent * 100,
             primarySaleHappened: false,
             isMutable: true,
             editionNonce: none(),
@@ -131,7 +126,8 @@ async function main(): Promise<void> {
 
     console.log("[cNFT Collection] Mint completed.");
     console.log("Transaction:", signature);
-    console.log(`Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    const clusterQuery = network === "devnet" ? "?cluster=devnet" : "";
+    console.log(`Explorer: https://explorer.solana.com/tx/${signature}${clusterQuery}`);
 }
 
 main().catch((error) => {

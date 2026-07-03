@@ -14,7 +14,8 @@ public class NftMinter {
             String nftName,
             String symbol,
             String rpcUrl,
-            int sellerFeePercent
+            int sellerFeePercent,
+            String network
     ) throws Exception {
 
         ProcessBuilder processBuilder = new ProcessBuilder(
@@ -26,7 +27,10 @@ public class NftMinter {
                 walletPath.toString(),
                 symbol,
                 rpcUrl,
-                String.valueOf(sellerFeePercent)
+                String.valueOf(sellerFeePercent),
+                "--network",
+                network,
+                "--allow-unverified-collection"
         );
 
         Process process = processBuilder.start();
@@ -71,6 +75,10 @@ public class NftMinter {
 
         String mintAddress = null;
         String transactionSignature = null;
+        String collectionMintAddress = null;
+        String collectionVerificationSignature = null;
+        String collectionVerificationStatus = null;
+        String nftMintStatus = null;
 
         // Parse the structured result lines emitted by mintNft.ts.
         for (String line : stdout.toString().split("\\R")) {
@@ -81,15 +89,49 @@ public class NftMinter {
             if (line.startsWith("TRANSACTION_SIGNATURE=")) {
                 transactionSignature = line.substring("TRANSACTION_SIGNATURE=".length());
             }
+
+            if (line.startsWith("COLLECTION_MINT_ADDRESS=")) {
+                collectionMintAddress = line.substring("COLLECTION_MINT_ADDRESS=".length());
+            }
+
+            if (line.startsWith("COLLECTION_VERIFICATION_SIGNATURE=")) {
+                collectionVerificationSignature = line.substring("COLLECTION_VERIFICATION_SIGNATURE=".length());
+            }
+
+            if (line.startsWith("COLLECTION_VERIFICATION_STATUS=")) {
+                collectionVerificationStatus = line.substring("COLLECTION_VERIFICATION_STATUS=".length());
+            }
+
+            if (line.startsWith("NFT_MINT_STATUS=")) {
+                nftMintStatus = line.substring("NFT_MINT_STATUS=".length());
+            }
         }
 
         if (mintAddress == null || transactionSignature == null) {
             throw new RuntimeException("Unable to parse mint result:\n" + stdout);
         }
 
-        return new MintResult(mintAddress, transactionSignature);
+        if ("failed".equals(collectionVerificationStatus)) {
+            System.out.println("Warning: NFT was minted, but collection verification failed.");
+        }
+
+        return new MintResult(
+                mintAddress,
+                transactionSignature,
+                collectionMintAddress,
+                collectionVerificationSignature,
+                collectionVerificationStatus,
+                nftMintStatus
+        );
     }
 
-    public record MintResult(String mintAddress, String transactionSignature) {
+    public record MintResult(
+            String mintAddress,
+            String transactionSignature,
+            String collectionMintAddress,
+            String collectionVerificationSignature,
+            String collectionVerificationStatus,
+            String nftMintStatus
+    ) {
     }
 }

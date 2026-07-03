@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-// Holds non-secret runtime values loaded from config/app-config.json.
+// Holds non-secret runtime values loaded from a network config directory.
 public class AppConfig {
 
     private final String appName;

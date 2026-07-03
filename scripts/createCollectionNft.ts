@@ -15,14 +15,25 @@ import {
     percentAmount
 } from "@metaplex-foundation/umi";
 
-import { loadConfig, loadRpcConfig, resolveConfigPath } from "./config.js";
+import {
+    getNetworkConfigDirectory,
+    getNetworkFromArgs,
+    loadAppConfig,
+    loadRpcConfig,
+    removeNetworkArgs,
+    resolveConfigPath
+} from "./config.js";
 
 async function main(): Promise<void> {
-    const config = loadConfig();
-    const rpcConfig = loadRpcConfig();
+    const cliArgs = process.argv.slice(2);
+    const network = getNetworkFromArgs(cliArgs);
+    const positionalArgs = removeNetworkArgs(cliArgs);
+    const config = loadAppConfig(network);
+    const rpcConfig = loadRpcConfig(network);
 
-    const walletPath = process.argv[2] ?? resolveConfigPath(config.walletPath);
+    const walletPath = positionalArgs[0] ?? resolveConfigPath(config.walletPath);
 
+    console.log("[Collection] Network:", network);
     console.log("[Collection] Using RPC:", rpcConfig.rpcUrl);
     console.log("[Collection] Using wallet:", walletPath);
 
@@ -60,11 +71,12 @@ async function main(): Promise<void> {
 
     const collectionConfigPath = path.join(
         process.cwd(),
-        "config",
+        getNetworkConfigDirectory(network),
         "collection-config.json"
     );
 
     const collectionConfig = {
+        network,
         collectionMintAddress,
         collectionName,
         collectionSymbol,
@@ -81,7 +93,8 @@ async function main(): Promise<void> {
     console.log("Collection NFT created successfully.");
     console.log("Collection mint address:", collectionMintAddress);
     console.log("Transaction:", signature);
-    console.log(`Explorer: https://explorer.solana.com/address/${collectionMintAddress}`);
+    const clusterQuery = network === "devnet" ? "?cluster=devnet" : "";
+    console.log(`Explorer: https://explorer.solana.com/address/${collectionMintAddress}${clusterQuery}`);
     console.log(`Collection config saved to: ${collectionConfigPath}`);
 }
 

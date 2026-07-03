@@ -25,6 +25,7 @@ public class Main {
         // Parse optional flags after the input file name.
         boolean shouldMint = false;
         Path walletOverride = null;
+        String network = System.getenv().getOrDefault("NETWORK", "mainnet");
 
         for (int i = 1; i < args.length; i++) {
             if (args[i].equals("--mint")) {
@@ -36,15 +37,28 @@ public class Main {
                 }
 
                 walletOverride = Paths.get(args[++i]);
+            } else if (args[i].equals("--network")) {
+                if (i + 1 >= args.length) {
+                    System.out.println("Missing value for --network");
+                    return;
+                }
+
+                network = args[++i];
             } else {
                 System.out.println("Unknown option: " + args[i]);
-                System.out.println("Supported options: --mint, --wallet <path>");
+                System.out.println("Supported options: --mint, --wallet <path>, --network <mainnet|devnet>");
                 return;
             }
         }
 
-        // Load all runtime settings from the shared JSON config.
-        AppConfig config = AppConfig.load(Paths.get("config", "app-config.json"));
+        if (!network.equals("mainnet") && !network.equals("devnet")) {
+            System.out.println("Invalid network: " + network + ". Expected \"mainnet\" or \"devnet\".");
+            return;
+        }
+
+        Path networkConfigDirectory = Paths.get("config", network);
+        AppConfig config = AppConfig.load(networkConfigDirectory.resolve("app-config.json"));
+        AppConfig storageConfig = AppConfig.load(Paths.get("config", "mainnet", "app-config.json"));
 
         String inputFileName = args[0];
 
@@ -69,7 +83,14 @@ public class Main {
             Files.createDirectories(metadataDirectory);
         }
 
-        Path walletPath = walletOverride != null ? walletOverride : config.walletPath();
+        // Storage remains independent from the Solana mint cluster. By default,
+        // Irys uses the known funded wallet while minting uses the selected network wallet.
+        Path storageWalletPath = walletOverride != null
+                ? walletOverride
+                : storageConfig.walletPath();
+        Path mintWalletPath = walletOverride != null
+                ? walletOverride
+                : config.walletPath();
 
         String fileName = filePath.getFileName().toString();
 
@@ -88,7 +109,7 @@ public class Main {
 
         // Upload the original asset first; the returned URI is used in metadata.
         System.out.println("Step 1: Uploading asset to Irys: " + filePath);
-        String irysAssetUri = IrysUploader.upload(filePath, walletPath);
+        String irysAssetUri = IrysUploader.upload(filePath, storageWalletPath);
         System.out.println("Asset upload completed: " + irysAssetUri);
 
         String irysCoverUri = null;
@@ -103,7 +124,7 @@ public class Main {
             }
 
             System.out.println("Step 2: Uploading cover image to Irys: " + coverPath);
-            irysCoverUri = IrysUploader.upload(coverPath, walletPath);
+            irysCoverUri = IrysUploader.upload(coverPath, storageWalletPath);
             System.out.println("Cover upload completed: " + irysCoverUri);
         }
 
@@ -130,25 +151,26 @@ public class Main {
 
         // Upload the metadata JSON and use its URI for the optional NFT mint.
         System.out.println("Step 4: Uploading metadata JSON to Irys: " + outputPath);
-        String irysMetadataUri = IrysUploader.upload(outputPath, walletPath);
+        String irysMetadataUri = IrysUploader.upload(outputPath, storageWalletPath);
         System.out.println("Metadata upload completed: " + irysMetadataUri);
 
         NftMinter.MintResult mintResult = null;
 
         // Mint only when the caller explicitly passes --mint.
         if (shouldMint) {
-            RpcConfig rpcConfig = RpcConfig.load(Paths.get("config", "rpc-config.json"));
+            RpcConfig rpcConfig = RpcConfig.load(networkConfigDirectory.resolve("rpc-config.json"));
             String nftName = config.nftName(baseName);
             String nftSymbol = config.symbol();
 
             System.out.println("Step 5: Minting NFT on Solana using metadata URI: " + irysMetadataUri);
             mintResult = NftMinter.mint(
                 irysMetadataUri,
-                walletPath,
+                mintWalletPath,
                 nftName,
                 nftSymbol,
                 rpcConfig.rpcUrl(),
-                config.sellerFeePercent()
+                config.sellerFeePercent(),
+                network
             );
             System.out.println("NFT mint completed: " + mintResult.mintAddress());
         }

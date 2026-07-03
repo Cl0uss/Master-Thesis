@@ -3,7 +3,7 @@ package functions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-// Holds private RPC settings loaded from config/rpc-config.json.
+// Holds private RPC settings loaded from a network config directory.
 public class RpcConfig {
 
     private final String rpcUrl;

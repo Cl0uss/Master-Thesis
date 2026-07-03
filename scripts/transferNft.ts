@@ -13,31 +13,45 @@ import {
     publicKey
 } from "@metaplex-foundation/umi";
 
-import { loadConfig, loadRpcConfig, resolveConfigPath } from "./config.js";
+import {
+    getNetworkFromArgs,
+    loadAppConfig,
+    loadRpcConfig,
+    removeNetworkArgs,
+    resolveConfigPath
+} from "./config.js";
 
 function logStep(message: string): void {
-    console.log(`[Transfer] ${message}`);
+    console.error(`[Transfer] ${message}`);
 }
 
-// Transfers one existing NFT to another wallet.
+// Transfers one existing standard NFT to another wallet.
 async function main(): Promise<void> {
-    const config = loadConfig();
-    const rpcConfig = loadRpcConfig();
-    const mintAddress = process.argv[2];
-    const destinationWallet = process.argv[3];
-    const walletPath = process.argv[4] ?? resolveConfigPath(config.walletPath);
-    const rpcUrl = process.argv[5] ?? rpcConfig.rpcUrl;
+    const cliArgs = process.argv.slice(2);
+    const network = getNetworkFromArgs(cliArgs);
+    const positionalArgs = removeNetworkArgs(cliArgs);
+
+    const appConfig = loadAppConfig(network);
+    const rpcConfig = loadRpcConfig(network);
+
+    const mintAddress = positionalArgs[0];
+    const destinationWallet = positionalArgs[1];
+    const walletPath = positionalArgs[2] ?? resolveConfigPath(appConfig.walletPath);
+    const rpcUrl = positionalArgs[3] ?? rpcConfig.rpcUrl;
 
     if (!mintAddress || !destinationWallet) {
         console.error(
-            "Usage: npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> [walletPath] [rpcUrl]"
+            "Usage:\n" +
+            "  npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> [walletPath] [rpcUrl]\n" +
+            "  npx tsx scripts/transferNft.ts <mintAddress> <destinationWallet> --network devnet"
         );
         process.exit(1);
     }
 
-    // Configure Umi and load the authority wallet that owns the NFT.
+    logStep(`Network: ${network}`);
     logStep(`Using RPC: ${rpcUrl}`);
     logStep(`Reading owner wallet: ${walletPath}`);
+
     const umi = createUmi(rpcUrl).use(mplTokenMetadata());
 
     const secretKey = JSON.parse(fs.readFileSync(walletPath, "utf8"));
@@ -48,29 +62,27 @@ async function main(): Promise<void> {
 
     const signer = createSignerFromKeypair(umi, keypair);
     umi.use(keypairIdentity(signer));
-    logStep(`Owner wallet public key: ${umi.identity.publicKey}`);
 
-    // Convert CLI string addresses into Umi public key values.
+    logStep(`Owner wallet public key: ${umi.identity.publicKey}`);
     logStep(`NFT mint: ${mintAddress}`);
     logStep(`Destination wallet: ${destinationWallet}`);
+
     const mint = publicKey(mintAddress);
     const destination = publicKey(destinationWallet);
 
-    // Fetch metadata so the transfer uses the correct token standard.
     logStep("Fetching NFT metadata from Solana RPC...");
     const asset = await fetchDigitalAsset(umi, mint);
     logStep("NFT metadata fetched.");
 
     const tokenStandard = asset.metadata.tokenStandard;
 
-    if (!("value" in tokenStandard)) {
+    if (!tokenStandard || !("value" in tokenStandard)) {
         throw new Error("Unable to determine NFT token standard.");
     }
 
     logStep(`Token standard: ${tokenStandard.value}`);
     logStep("Sending transfer transaction and waiting for confirmation...");
 
-    // Submit and confirm the transfer transaction.
     const result = await transferV1(umi, {
         mint,
         authority: umi.identity,
@@ -80,19 +92,18 @@ async function main(): Promise<void> {
     }).sendAndConfirm(umi);
 
     const signature = bs58.encode(result.signature);
+    const explorerUrl = `https://explorer.solana.com/tx/${signature}${
+        network === "devnet" ? "?cluster=devnet" : ""
+    }`;
 
     logStep("Transfer transaction confirmed.");
 
-    console.log("NFT transferred successfully.");
-    console.log("Mint address:", mintAddress);
-    console.log("Previous owner:", umi.identity.publicKey.toString());
-    console.log("New owner:", destinationWallet);
-    console.log("Transaction:", signature);
-    console.log(`Explorer: https://explorer.solana.com/tx/${signature}`);
-
-    console.log("");
-    console.log("Ownership transfer was confirmed by the Solana transaction.");
-    console.log("Separate owner check is optional and may fail on public RPC because of rate limits.");
+    console.log("TRANSFER_STATUS=success");
+    console.log(`MINT_ADDRESS=${mintAddress}`);
+    console.log(`PREVIOUS_OWNER=${umi.identity.publicKey}`);
+    console.log(`NEW_OWNER=${destinationWallet}`);
+    console.log(`TRANSACTION_SIGNATURE=${signature}`);
+    console.log(`EXPLORER_URL=${explorerUrl}`);
 }
 
 main().catch((error) => {

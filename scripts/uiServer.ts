@@ -4,7 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getNftOwner } from "./checkNftOwner.js";
-import { loadConfig, resolveConfigPath } from "./config.js";
+import {
+    getNetworkFromArgs,
+    loadAppConfig,
+    resolveConfigPath
+} from "./config.js";
 import { getHtml } from "./ui/html.js";
 import { runCommand } from "./ui/commandRunner.js";
 import {
@@ -17,6 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const port = Number(process.env.PORT ?? 5174);
+const network = getNetworkFromArgs(process.argv.slice(2));
 
 function ensureDirectory(directoryPath: string): void {
     fs.mkdirSync(directoryPath, { recursive: true });
@@ -55,7 +60,7 @@ async function verifyStandardNftAccess(
     allowed: boolean;
     owner: string;
 }> {
-    const owner = await getNftOwner(mintAddress);
+    const owner = await getNftOwner(mintAddress, { network });
 
     return {
         allowed: owner === walletAddress,
@@ -101,7 +106,7 @@ async function handleUpload(
     response: http.ServerResponse,
     url: URL
 ): Promise<void> {
-    const config = loadConfig();
+    const config = loadAppConfig(network);
     const kind = url.searchParams.get("kind") ?? "";
     const originalFilename = url.searchParams.get("filename") ?? "upload.bin";
     const filename = sanitizeFilename(originalFilename);
@@ -178,6 +183,8 @@ async function handleRun(
         args.push("--mint");
     }
 
+    args.push("--network", network);
+
     runCommand(response, args, "Standard NFT pipeline", projectRoot);
 }
 
@@ -206,6 +213,8 @@ async function handleCnftCommand(
             args.push(name);
         }
     }
+
+    args.push("--network", network);
 
     runCommand(response, args, label, projectRoot);
 }
@@ -302,6 +311,43 @@ async function handleProtectedContent(
     });
 }
 
+async function handleTransferNft(
+    request: http.IncomingMessage,
+    response: http.ServerResponse
+): Promise<void> {
+    const body = parseJsonBody(await readRequestBody(request));
+
+    const mintAddress = getStringField(body, "mintAddress").trim();
+    const destinationWallet = getStringField(body, "destinationWallet").trim();
+    const walletPath = getStringField(body, "walletPath").trim();
+
+    if (!mintAddress) {
+        sendJson(response, { error: "Missing mintAddress." }, 400);
+        return;
+    }
+
+    if (!destinationWallet) {
+        sendJson(response, { error: "Missing destinationWallet." }, 400);
+        return;
+    }
+
+    const args = [
+        "npx",
+        "tsx",
+        "scripts/transferNft.ts",
+        mintAddress,
+        destinationWallet
+    ];
+
+    if (walletPath) {
+        args.push(walletPath);
+    }
+
+    args.push("--network", network);
+
+    runCommand(response, args, "Transfer Standard NFT", projectRoot);
+}
+
 async function requestListener(
     request: http.IncomingMessage,
     response: http.ServerResponse
@@ -319,7 +365,7 @@ async function requestListener(
         }
 
         if (request.method === "GET" && url.pathname === "/api/config") {
-            const config = loadConfig();
+            const config = loadAppConfig(network);
             sendJson(response, {
                 walletPath: resolveConfigPath(config.walletPath),
                 rawFilesDirectory: config.rawFilesDirectory,
@@ -391,6 +437,11 @@ async function requestListener(
             return;
         }
 
+        if (request.method === "POST" && url.pathname === "/api/nft/transfer") {
+            await handleTransferNft(request, response);
+            return;
+        }
+
         sendJson(response, { error: "Not found." }, 404);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -404,4 +455,5 @@ const server = http.createServer((request, response) => {
 
 server.listen(port, () => {
     console.log(`UI server running at http://localhost:${port}`);
+    console.log(`Solana network: ${network}`);
 });

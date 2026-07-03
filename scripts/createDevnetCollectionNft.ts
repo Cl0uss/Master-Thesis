@@ -14,22 +14,31 @@ import {
     percentAmount
 } from "@metaplex-foundation/umi";
 
-import { loadConfig } from "./config.js";
+import {
+    getNetworkConfigDirectory,
+    getNetworkFromArgs,
+    loadAppConfig,
+    loadCollectionConfig,
+    loadRpcConfig,
+    resolveConfigPath
+} from "./config.js";
 
 async function main(): Promise<void> {
-    const config = loadConfig();
-
-    const rpcUrl = "https://api.devnet.solana.com";
-    const walletPath = "/home/cl0us/Desktop/thesis-wallet/thesis-wallet-devnet.json";
-
-    const mainnetCollectionConfig = JSON.parse(
-        fs.readFileSync("config/collection-config.json", "utf8")
-    );
+    const network = getNetworkFromArgs(process.argv.slice(2), "devnet");
+    const config = loadAppConfig(network);
+    const rpcUrl = loadRpcConfig(network).rpcUrl;
+    const walletPath = resolveConfigPath(config.walletPath);
+    const existingCollectionConfig = loadCollectionConfig(network);
 
     const collectionName = config.collectionName;
     const collectionSymbol = config.symbol;
-    const collectionUri = mainnetCollectionConfig.collectionUri;
+    const collectionUri = existingCollectionConfig.collectionUri;
 
+    if (!collectionUri) {
+        throw new Error(`Missing collection URI for ${network}.`);
+    }
+
+    console.log("[Collection] Network:", network);
     console.log("[Devnet Collection] Using RPC:", rpcUrl);
     console.log("[Devnet Collection] Using wallet:", walletPath);
     console.log("[Devnet Collection] Metadata URI:", collectionUri);
@@ -64,12 +73,12 @@ async function main(): Promise<void> {
 
     const outputPath = path.join(
         process.cwd(),
-        "config",
-        "collection-config.devnet.json"
+        getNetworkConfigDirectory(network),
+        "collection-config.json"
     );
 
     const output = {
-        network: "devnet",
+        network,
         collectionMintAddress,
         collectionName,
         collectionSymbol,
@@ -83,7 +92,8 @@ async function main(): Promise<void> {
     console.log("[Devnet Collection] Created successfully.");
     console.log("Collection mint:", collectionMintAddress);
     console.log("Transaction:", signature);
-    console.log(`Explorer: https://explorer.solana.com/address/${collectionMintAddress}?cluster=devnet`);
+    const clusterQuery = network === "devnet" ? "?cluster=devnet" : "";
+    console.log(`Explorer: https://explorer.solana.com/address/${collectionMintAddress}${clusterQuery}`);
     console.log("Config saved:", outputPath);
 }
 

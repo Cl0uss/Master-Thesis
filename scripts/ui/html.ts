@@ -9,7 +9,6 @@ export function getHtml(): string {
   <style>
     :root {
       --bg: #0f172a;
-      --bg-soft: #111827;
       --card: #182235;
       --card-light: #1f2a3d;
       --border: #314158;
@@ -17,7 +16,6 @@ export function getHtml(): string {
       --muted: #9ca3af;
       --muted-2: #64748b;
       --accent: #7dd3fc;
-      --accent-strong: #38bdf8;
       --green: #86efac;
       --yellow: #fde68a;
       --red: #fca5a5;
@@ -51,10 +49,6 @@ export function getHtml(): string {
         linear-gradient(135deg, #0f172a 0%, #111827 48%, #0b1120 100%);
     }
 
-    a {
-      color: var(--accent);
-    }
-
     main {
       width: min(1180px, calc(100% - 40px));
       margin: 0 auto;
@@ -85,8 +79,6 @@ export function getHtml(): string {
 
     .eyebrow {
       display: inline-flex;
-      align-items: center;
-      gap: 8px;
       padding: 7px 12px;
       border: 1px solid rgba(125, 211, 252, 0.28);
       border-radius: 999px;
@@ -148,7 +140,6 @@ export function getHtml(): string {
 
     .badge {
       display: inline-flex;
-      align-items: center;
       justify-content: center;
       min-width: 86px;
       padding: 5px 9px;
@@ -177,6 +168,10 @@ export function getHtml(): string {
       grid-template-columns: 1fr 1fr;
       gap: 22px;
       align-items: start;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
     }
 
     .panel {
@@ -247,7 +242,6 @@ export function getHtml(): string {
       color: var(--text);
       padding: 12px 13px;
       outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     }
 
     input[type="file"] {
@@ -258,7 +252,6 @@ export function getHtml(): string {
     input[type="file"]:focus {
       border-color: rgba(125, 211, 252, 0.72);
       box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
-      background: rgba(15, 23, 42, 0.82);
     }
 
     .checkbox-row {
@@ -274,7 +267,7 @@ export function getHtml(): string {
     .checkbox-row input {
       width: 17px;
       height: 17px;
-      accent-color: var(--accent-strong);
+      accent-color: var(--accent);
     }
 
     .button-row {
@@ -293,16 +286,10 @@ export function getHtml(): string {
       font-weight: 750;
       font-size: 14px;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
     }
 
     button:hover {
       background: var(--button-hover);
-      transform: translateY(-1px);
-    }
-
-    button:active {
-      transform: translateY(0);
     }
 
     button.secondary {
@@ -316,11 +303,94 @@ export function getHtml(): string {
     button:disabled {
       cursor: not-allowed;
       opacity: 0.55;
-      transform: none;
     }
 
-    .wide {
-      grid-column: 1 / -1;
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .mini-card,
+    .protected-preview {
+      padding: 14px;
+      border-radius: 15px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .mini-card strong,
+    .protected-preview strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #f8fafc;
+      font-size: 14px;
+    }
+
+    .mini-card span,
+    .protected-preview span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .access-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .access-result {
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      min-height: 260px;
+      padding: 22px;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    .access-result.granted {
+      border-color: rgba(134, 239, 172, 0.48);
+      background: rgba(22, 101, 52, 0.18);
+    }
+
+    .access-result.denied {
+      border-color: rgba(252, 165, 165, 0.5);
+      background: rgba(127, 29, 29, 0.18);
+    }
+
+    .access-result.checking {
+      border-color: rgba(125, 211, 252, 0.45);
+      background: rgba(14, 165, 233, 0.12);
+    }
+
+    .access-result h3 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .access-result p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .access-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      font-size: 24px;
+      background: rgba(148, 163, 184, 0.12);
+    }
+
+    .protected-preview {
+      margin-top: 12px;
+      background: rgba(2, 6, 23, 0.42);
     }
 
     .log-panel {
@@ -366,108 +436,6 @@ export function getHtml(): string {
       white-space: pre-wrap;
     }
 
-    .mini-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .mini-card {
-      padding: 14px;
-      border-radius: 15px;
-      background: rgba(15, 23, 42, 0.45);
-      border: 1px solid rgba(148, 163, 184, 0.12);
-    }
-
-    .mini-card strong {
-      display: block;
-      margin-bottom: 5px;
-      color: #f8fafc;
-      font-size: 14px;
-    }
-
-    .mini-card span {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .access-grid {
-      display: grid;
-      grid-template-columns: 0.9fr 1.1fr;
-      gap: 18px;
-      align-items: stretch;
-    }
-
-    .access-result {
-      display: grid;
-      align-content: center;
-      gap: 10px;
-      min-height: 260px;
-      padding: 22px;
-      border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      background: rgba(15, 23, 42, 0.45);
-      transition: border-color 0.2s ease, background 0.2s ease;
-    }
-
-    .access-result h3 {
-      margin: 0;
-      font-size: 21px;
-    }
-
-    .access-result p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .access-icon {
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      border-radius: 15px;
-      font-size: 24px;
-      background: rgba(148, 163, 184, 0.12);
-    }
-
-    .access-result.granted {
-      border-color: rgba(134, 239, 172, 0.48);
-      background: rgba(22, 101, 52, 0.18);
-    }
-
-    .access-result.denied {
-      border-color: rgba(252, 165, 165, 0.5);
-      background: rgba(127, 29, 29, 0.18);
-    }
-
-    .access-result.checking {
-      border-color: rgba(125, 211, 252, 0.45);
-      background: rgba(14, 165, 233, 0.12);
-    }
-
-    .protected-preview {
-      margin-top: 12px;
-      padding: 15px;
-      border-radius: 15px;
-      background: rgba(2, 6, 23, 0.42);
-      border: 1px solid rgba(148, 163, 184, 0.12);
-    }
-
-    .protected-preview strong {
-      display: block;
-      margin-bottom: 5px;
-      color: #f8fafc;
-      font-size: 14px;
-    }
-
-    .protected-preview span {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
     @media (max-width: 900px) {
       .hero,
       .layout,
@@ -491,8 +459,8 @@ export function getHtml(): string {
         <h1>Transmedia NFT Distribution Framework</h1>
         <p class="hero-text">
           Local thesis dashboard for uploading assets to Irys, generating metadata,
-          minting standard NFTs, testing compressed NFTs on Devnet, and preparing
-          token-gated content access.
+          minting standard NFTs, testing compressed NFTs on Devnet, transferring
+          standard NFTs, and checking token-gated access.
         </p>
       </div>
 
@@ -508,12 +476,12 @@ export function getHtml(): string {
             <span class="badge ready">Ready</span>
           </div>
           <div class="status-item">
-            <span>cNFT Devnet</span>
-            <span class="badge devnet">Devnet</span>
+            <span>Transfer NFT</span>
+            <span class="badge next">Ready</span>
           </div>
           <div class="status-item">
-            <span>Token-Gated Access</span>
-            <span class="badge next">Next</span>
+            <span>cNFT Devnet</span>
+            <span class="badge devnet">Devnet</span>
           </div>
         </div>
       </aside>
@@ -522,11 +490,10 @@ export function getHtml(): string {
     <section class="layout">
       <div class="panel">
         <div class="panel-header">
-          <p class="panel-kicker">Mainnet Pipeline</p>
+          <p class="panel-kicker">Main Pipeline</p>
           <h2>Standard NFT Minting</h2>
           <p class="panel-description">
-            Upload an asset, optional cover image, wallet JSON, and run the existing
-            standard NFT pipeline. Minting can be enabled when needed.
+            Upload asset, optional cover image, wallet JSON, and run the standard NFT pipeline.
           </p>
         </div>
 
@@ -547,7 +514,7 @@ export function getHtml(): string {
             <div class="field">
               <label for="walletFile">Wallet JSON</label>
               <input id="walletFile" type="file" accept="application/json,.json" />
-              <div class="hint">Optional wallet file. If empty, default config wallet is used.</div>
+              <div class="hint">Optional wallet file. If empty, config wallet is used.</div>
             </div>
 
             <label class="checkbox-row">
@@ -567,8 +534,7 @@ export function getHtml(): string {
           <p class="panel-kicker">Devnet Pipeline</p>
           <h2>Compressed NFT Testing</h2>
           <p class="panel-description">
-            Create Merkle Tree, create Devnet collection, and mint compressed NFTs
-            before moving the final logic to Mainnet.
+            Create Merkle Tree, create Devnet collection, and mint compressed NFTs.
           </p>
         </div>
 
@@ -594,7 +560,6 @@ export function getHtml(): string {
             <div class="field">
               <label for="cnftMetadataUri">Metadata URI</label>
               <input id="cnftMetadataUri" type="text" placeholder="https://gateway.irys.xyz/..." />
-              <div class="hint">Use metadata URI uploaded to Irys.</div>
             </div>
 
             <div class="field">
@@ -605,6 +570,54 @@ export function getHtml(): string {
             <div class="button-row">
               <button id="mintCnftButton">Mint cNFT</button>
               <button id="mintCnftCollectionButton">Mint cNFT Into Collection</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel wide">
+        <div class="panel-header">
+          <p class="panel-kicker">Ownership Layer</p>
+          <h2>Transfer NFT Ownership</h2>
+          <p class="panel-description">
+            Transfer a standard NFT to another wallet. The current owner wallet must sign the transaction.
+          </p>
+        </div>
+
+        <div class="panel-body">
+          <div class="stack">
+            <div class="field">
+              <label for="transferMintAddress">NFT Mint Address</label>
+              <input
+                id="transferMintAddress"
+                type="text"
+                placeholder="NFT mint address to transfer"
+              />
+            </div>
+
+            <div class="field">
+              <label for="transferDestinationWallet">Recipient Wallet Address</label>
+              <input
+                id="transferDestinationWallet"
+                type="text"
+                placeholder="Wallet that will receive the NFT"
+              />
+            </div>
+
+            <div class="field">
+              <label for="transferWalletFile">Owner Wallet JSON</label>
+              <input
+                id="transferWalletFile"
+                type="file"
+                accept="application/json,.json"
+              />
+              <div class="hint">
+                Optional. If empty, the current network config wallet is used.
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button id="transferNftButton" type="button">Transfer NFT Ownership</button>
             </div>
           </div>
         </div>
@@ -630,9 +643,6 @@ export function getHtml(): string {
                   type="text"
                   placeholder="Owner wallet address"
                 />
-                <div class="hint">
-                  The wallet that should own the NFT.
-                </div>
               </div>
 
               <div class="field">
@@ -642,9 +652,6 @@ export function getHtml(): string {
                   type="text"
                   placeholder="NFT mint address"
                 />
-                <div class="hint">
-                  Standard NFT mint address to check.
-                </div>
               </div>
 
               <div class="button-row">
@@ -688,12 +695,17 @@ export function getHtml(): string {
       logNode.textContent = text;
     }
 
+    function appendLog(text) {
+      logNode.textContent += text;
+      logNode.scrollTop = logNode.scrollHeight;
+    }
+
     function setState(text) {
       logState.textContent = text;
     }
 
     function setButtonsDisabled(disabled) {
-      document.querySelectorAll('button').forEach((button) => {
+      document.querySelectorAll('button').forEach(function(button) {
         button.disabled = disabled;
       });
     }
@@ -707,14 +719,16 @@ export function getHtml(): string {
         "'": '&#39;'
       };
 
-      return String(value ?? '').replace(/[&<>"']/g, (char) => map[char]);
+      return String(value ?? '').replace(/[&<>"']/g, function(char) {
+        return map[char];
+      });
     }
 
-    async function uploadFile(kind, file, extraParams = {}) {
+    async function uploadFile(kind, file, extraParams) {
       const params = new URLSearchParams({
-        kind,
+        kind: kind,
         filename: file.name,
-        ...extraParams
+        ...(extraParams || {})
       });
 
       const response = await fetch('/api/upload?' + params.toString(), {
@@ -731,7 +745,7 @@ export function getHtml(): string {
       return data;
     }
 
-    async function streamCommand(url, payload = {}) {
+    async function streamCommand(url, payload) {
       setButtonsDisabled(true);
       setLog('');
       setState('Running');
@@ -740,7 +754,7 @@ export function getHtml(): string {
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload || {})
         });
 
         if (!response.body) {
@@ -753,17 +767,16 @@ export function getHtml(): string {
         const decoder = new TextDecoder();
 
         while (true) {
-          const { value, done } = await reader.read();
+          const result = await reader.read();
 
-          if (done) {
+          if (result.done) {
             break;
           }
 
-          logNode.textContent += decoder.decode(value, { stream: true });
-          logNode.scrollTop = logNode.scrollHeight;
+          appendLog(decoder.decode(result.value, { stream: true }));
         }
 
-        setState('Finished');
+        setState(response.ok ? 'Finished' : 'Finished with error');
       } catch (error) {
         setState('Error');
         setLog(error.message || String(error));
@@ -772,57 +785,45 @@ export function getHtml(): string {
       }
     }
 
-    function renderAccessResult(state, data = {}) {
+    function renderAccessResult(state, data) {
       const result = document.querySelector('#accessResult');
 
       result.classList.remove('locked', 'checking', 'granted', 'denied');
       result.classList.add(state);
 
       if (state === 'checking') {
-        result.innerHTML = \`
-          <div class="access-icon">⏳</div>
-          <h3>Checking Ownership</h3>
-          <p>Please wait while the backend checks the NFT owner on Solana.</p>
-          <div class="protected-preview">
-            <strong>Verification in progress</strong>
-            <span>Access decision will appear here.</span>
-          </div>
-        \`;
+        result.innerHTML =
+          '<div class="access-icon">⏳</div>' +
+          '<h3>Checking Ownership</h3>' +
+          '<p>Please wait while the backend checks the NFT owner on Solana.</p>' +
+          '<div class="protected-preview">' +
+          '<strong>Verification in progress</strong>' +
+          '<span>Access decision will appear here.</span>' +
+          '</div>';
         return;
       }
 
       if (state === 'granted') {
-        result.innerHTML = \`
-          <div class="access-icon">✅</div>
-          <h3>Access Granted</h3>
-          <p>This wallet owns the required NFT.</p>
-
-          <div class="protected-preview">
-            <strong>\${escapeHtml(data.content?.title || 'Protected Content')}</strong>
-            <span>
-              \${escapeHtml(data.content?.message || 'Full content is now unlocked.')}
-              <br />
-              Owner: \${escapeHtml(data.owner)}
-            </span>
-          </div>
-
-          <div class="button-row">
-            <button id="openProtectedContentButton" type="button">
-              Open Protected Content
-            </button>
-          </div>
-
-          <div
-            id="protectedContentOutput"
-            class="protected-preview"
-            style="display: none;"
-          ></div>
-        \`;
+        result.innerHTML =
+          '<div class="access-icon">✅</div>' +
+          '<h3>Access Granted</h3>' +
+          '<p>This wallet owns the required NFT.</p>' +
+          '<div class="protected-preview">' +
+          '<strong>' + escapeHtml(data?.content?.title || 'Protected Content') + '</strong>' +
+          '<span>' +
+          escapeHtml(data?.content?.message || 'Full content is now unlocked.') +
+          '<br />Owner: ' + escapeHtml(data?.owner || '') +
+          '</span>' +
+          '</div>' +
+          '<div class="button-row">' +
+          '<button id="openProtectedContentButton" type="button">Open Protected Content</button>' +
+          '</div>' +
+          '<div id="protectedContentOutput" class="protected-preview" style="display: none;"></div>';
 
         const openButton = result.querySelector('#openProtectedContentButton');
 
         if (openButton) {
-          openButton.addEventListener('click', () => {
+          openButton.addEventListener('click', function() {
             loadProtectedContent();
           });
         }
@@ -831,29 +832,25 @@ export function getHtml(): string {
       }
 
       if (state === 'denied') {
-        result.innerHTML = \`
-          <div class="access-icon">⛔</div>
-          <h3>Access Denied</h3>
-          <p>This wallet does not own the required NFT.</p>
-          <div class="protected-preview">
-            <strong>Content remains locked</strong>
-            <span>
-              Actual owner: \${escapeHtml(data.owner || 'Unknown')}
-            </span>
-          </div>
-        \`;
+        result.innerHTML =
+          '<div class="access-icon">⛔</div>' +
+          '<h3>Access Denied</h3>' +
+          '<p>This wallet does not own the required NFT.</p>' +
+          '<div class="protected-preview">' +
+          '<strong>Content remains locked</strong>' +
+          '<span>Actual owner: ' + escapeHtml(data?.owner || 'Unknown') + '</span>' +
+          '</div>';
         return;
       }
 
-      result.innerHTML = \`
-        <div class="access-icon">🔒</div>
-        <h3>Protected Content Locked</h3>
-        <p>Enter a wallet address and NFT mint address to verify ownership.</p>
-        <div class="protected-preview">
-          <strong>Demo protected content</strong>
-          <span>Full book / music / image access will appear here after verification.</span>
-        </div>
-      \`;
+      result.innerHTML =
+        '<div class="access-icon">🔒</div>' +
+        '<h3>Protected Content Locked</h3>' +
+        '<p>Enter a wallet address and NFT mint address to verify ownership.</p>' +
+        '<div class="protected-preview">' +
+        '<strong>Demo protected content</strong>' +
+        '<span>Full book / music / image access will appear here after verification.</span>' +
+        '</div>';
     }
 
     async function loadProtectedContent() {
@@ -868,10 +865,9 @@ export function getHtml(): string {
 
       if (output) {
         output.style.display = 'block';
-        output.innerHTML = \`
-          <strong>Loading protected content...</strong>
-          <span>Please wait while ownership is verified again.</span>
-        \`;
+        output.innerHTML =
+          '<strong>Loading protected content...</strong>' +
+          '<span>Please wait while ownership is verified again.</span>';
       }
 
       setButtonsDisabled(true);
@@ -890,48 +886,91 @@ export function getHtml(): string {
         }
 
         const sections = (data.content?.sections || [])
-          .map((section) => \`
-            <div class="protected-preview">
-              <strong>\${escapeHtml(section.title)}</strong>
-              <span>\${escapeHtml(section.body)}</span>
-            </div>
-          \`)
+          .map(function(section) {
+            return (
+              '<div class="protected-preview">' +
+              '<strong>' + escapeHtml(section.title) + '</strong>' +
+              '<span>' + escapeHtml(section.body) + '</span>' +
+              '</div>'
+            );
+          })
           .join('');
 
         if (output) {
           output.style.display = 'block';
-          output.innerHTML = \`
-            <strong>\${escapeHtml(data.content?.title || 'Protected Content')}</strong>
-            <span>\${escapeHtml(data.content?.subtitle || '')}</span>
-
-            <div class="protected-preview">
-              <strong>NFT Verification</strong>
-              <span>
-                Wallet: \${escapeHtml(data.walletAddress)}
-                <br />
-                Mint: \${escapeHtml(data.mintAddress)}
-                <br />
-                Owner: \${escapeHtml(data.owner)}
-              </span>
-            </div>
-
-            \${sections}
-          \`;
+          output.innerHTML =
+            '<strong>' + escapeHtml(data.content?.title || 'Protected Content') + '</strong>' +
+            '<span>' + escapeHtml(data.content?.subtitle || '') + '</span>' +
+            '<div class="protected-preview">' +
+            '<strong>NFT Verification</strong>' +
+            '<span>' +
+            'Wallet: ' + escapeHtml(data.walletAddress) +
+            '<br />Mint: ' + escapeHtml(data.mintAddress) +
+            '<br />Owner: ' + escapeHtml(data.owner) +
+            '</span>' +
+            '</div>' +
+            sections;
         }
       } catch (error) {
         if (output) {
           output.style.display = 'block';
-          output.innerHTML = \`
-            <strong>Access Error</strong>
-            <span>\${escapeHtml(error.message || String(error))}</span>
-          \`;
+          output.innerHTML =
+            '<strong>Access Error</strong>' +
+            '<span>' + escapeHtml(error.message || String(error)) + '</span>';
         }
       } finally {
         setButtonsDisabled(false);
       }
     }
 
-    document.querySelector('#pipelineForm').addEventListener('submit', async (event) => {
+    async function transferNftOwnership() {
+      const mintAddress = document.querySelector('#transferMintAddress').value.trim();
+      const destinationWallet = document.querySelector('#transferDestinationWallet').value.trim();
+      const walletFile = document.querySelector('#transferWalletFile').files[0];
+
+      if (!mintAddress || !destinationWallet) {
+        setState('Transfer input missing');
+        setLog('Please enter both NFT mint address and recipient wallet address.');
+        return;
+      }
+
+      setButtonsDisabled(true);
+      setState('Preparing transfer');
+      setLog('Preparing NFT transfer...\\n');
+
+      try {
+        let walletPath = '';
+
+        if (walletFile) {
+          appendLog('Uploading owner wallet file...\\n');
+
+          const walletUpload = await uploadFile('wallet', walletFile);
+
+          walletPath = walletUpload.path;
+
+          appendLog('Owner wallet saved: ' + walletUpload.path + '\\n');
+        } else {
+          appendLog('No owner wallet file selected. Using current network config wallet.\\n');
+        }
+
+        appendLog('\\nStarting NFT transfer...\\n\\n');
+
+        setButtonsDisabled(false);
+
+        await streamCommand('/api/nft/transfer', {
+          mintAddress: mintAddress,
+          destinationWallet: destinationWallet,
+          walletPath: walletPath
+        });
+      } catch (error) {
+        setState('Transfer error');
+        setLog(error.message || String(error));
+      } finally {
+        setButtonsDisabled(false);
+      }
+    }
+
+    document.querySelector('#pipelineForm').addEventListener('submit', async function(event) {
       event.preventDefault();
 
       const assetFile = document.querySelector('#assetFile').files[0];
@@ -950,33 +989,33 @@ export function getHtml(): string {
 
       try {
         const assetUpload = await uploadFile('asset', assetFile);
-        logNode.textContent += 'Asset saved: ' + assetUpload.path + '\\n';
+        appendLog('Asset saved: ' + assetUpload.path + '\\n');
 
         if (coverFile) {
-          logNode.textContent += 'Uploading cover...\\n';
+          appendLog('Uploading cover...\\n');
           const coverUpload = await uploadFile('cover', coverFile, {
             assetFilename: assetUpload.filename
           });
-          logNode.textContent += 'Cover saved: ' + coverUpload.path + '\\n';
+          appendLog('Cover saved: ' + coverUpload.path + '\\n');
         }
 
         let walletPath = '';
 
         if (walletFile) {
-          logNode.textContent += 'Uploading wallet...\\n';
+          appendLog('Uploading wallet...\\n');
           const walletUpload = await uploadFile('wallet', walletFile);
           walletPath = walletUpload.path;
-          logNode.textContent += 'Wallet saved: ' + walletUpload.path + '\\n';
+          appendLog('Wallet saved: ' + walletUpload.path + '\\n');
         }
 
-        logNode.textContent += '\\nStarting standard NFT pipeline...\\n\\n';
+        appendLog('\\nStarting standard NFT pipeline...\\n\\n');
 
         setButtonsDisabled(false);
 
         await streamCommand('/api/run', {
           filename: assetUpload.filename,
-          walletPath,
-          mint
+          walletPath: walletPath,
+          mint: mint
         });
       } catch (error) {
         setState('Error');
@@ -986,29 +1025,33 @@ export function getHtml(): string {
       }
     });
 
-    document.querySelector('#createTreeButton').addEventListener('click', () => {
+    document.querySelector('#createTreeButton').addEventListener('click', function() {
       streamCommand('/api/cnft/create-tree');
     });
 
-    document.querySelector('#createDevnetCollectionButton').addEventListener('click', () => {
+    document.querySelector('#createDevnetCollectionButton').addEventListener('click', function() {
       streamCommand('/api/cnft/create-devnet-collection');
     });
 
-    document.querySelector('#mintCnftButton').addEventListener('click', () => {
+    document.querySelector('#mintCnftButton').addEventListener('click', function() {
       streamCommand('/api/cnft/mint', {
         metadataUri: document.querySelector('#cnftMetadataUri').value.trim(),
         name: document.querySelector('#cnftName').value.trim()
       });
     });
 
-    document.querySelector('#mintCnftCollectionButton').addEventListener('click', () => {
+    document.querySelector('#mintCnftCollectionButton').addEventListener('click', function() {
       streamCommand('/api/cnft/mint-to-collection', {
         metadataUri: document.querySelector('#cnftMetadataUri').value.trim(),
         name: document.querySelector('#cnftName').value.trim()
       });
     });
 
-    document.querySelector('#checkAccessButton').addEventListener('click', async () => {
+    document.querySelector('#transferNftButton').addEventListener('click', function() {
+      transferNftOwnership();
+    });
+
+    document.querySelector('#checkAccessButton').addEventListener('click', async function() {
       const walletAddress = document.querySelector('#accessWalletAddress').value.trim();
       const mintAddress = document.querySelector('#accessMintAddress').value.trim();
 
@@ -1029,7 +1072,10 @@ export function getHtml(): string {
         const response = await fetch('/api/access/check-nft', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ walletAddress, mintAddress })
+          body: JSON.stringify({
+            walletAddress: walletAddress,
+            mintAddress: mintAddress
+          })
         });
 
         const data = await response.json();
@@ -1040,8 +1086,8 @@ export function getHtml(): string {
 
         if (data.allowed) {
           lastGrantedAccess = {
-            walletAddress,
-            mintAddress
+            walletAddress: walletAddress,
+            mintAddress: mintAddress
           };
         } else {
           lastGrantedAccess = null;
