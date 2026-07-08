@@ -1,10 +1,13 @@
 {
   "appName": "Master-Thesis",
   "creatorWallet": "9p2MgiUevA82gaJfAVeizSYD38bVMXiijGFcm8rxUXbS",
+  "studentWallet": "EfNeambEcj1aGKfKzKpYdcdxXuzDkgAdwgQDSZfpXHSa",
   "walletPath": "/home/cl0us/Desktop/thesis-wallet/thesis-wallet.json",
   "secondWallet": "EfNeambEcj1aGKfKzKpYdcdxXuzDkgAdwgQDSZfpXHSa",
   "symbol": "TMDC",
   "sellerFeePercent": 5,
+  "creatorRoyaltyShare": 80,
+  "studentRoyaltyShare": 20,
   "network": "mainnet",
   "rawFilesDirectory": "rawFiles",
   "metadataDirectory": "metadata",

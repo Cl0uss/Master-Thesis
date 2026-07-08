@@ -67,6 +67,9 @@ async function main(): Promise<void> {
     const signer = createSignerFromKeypair(umi, keypair);
     umi.use(keypairIdentity(signer));
 
+    const creatorAddress = publicKey(appConfig.creatorWallet);
+    const studentAddress = publicKey(appConfig.studentWallet);
+
     const result = await mintV1(umi, {
         leafOwner: umi.identity.publicKey,
         leafDelegate: umi.identity.publicKey,
@@ -87,9 +90,14 @@ async function main(): Promise<void> {
             tokenProgramVersion: TokenProgramVersion.Original,
             creators: [
                 {
-                    address: umi.identity.publicKey,
+                    address: creatorAddress,
+                    verified: creatorAddress === umi.identity.publicKey,
+                    share: appConfig.creatorRoyaltyShare
+                },
+                {
+                    address: studentAddress,
                     verified: false,
-                    share: 100
+                    share: appConfig.studentRoyaltyShare
                 }
             ]
         }

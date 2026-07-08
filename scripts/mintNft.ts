@@ -3,10 +3,13 @@ import bs58 from "bs58";
 
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
+    approveCollectionAuthority,
     createNft,
+    findCollectionAuthorityRecordPda,
     findMasterEditionPda,
     findMetadataPda,
     mplTokenMetadata,
+    safeFetchCollectionAuthorityRecord,
     verifySizedCollectionItem
 } from "@metaplex-foundation/mpl-token-metadata";
 import {
@@ -32,6 +35,37 @@ function removeMintFlags(args: string[]): string[] {
         arg !== "--allow-unverified-collection" &&
         arg !== "--skip-collection-verification"
     );
+}
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function retryCollectionVerification<T>(
+    verify: () => Promise<T>,
+    attempts = 5
+): Promise<T> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            return await verify();
+        } catch (error) {
+            lastError = error;
+
+            if (attempt === attempts) {
+                break;
+            }
+
+            const delayMs = attempt * 3000;
+            console.error(
+                `[Solana] Collection verification attempt ${attempt}/${attempts} failed. Retrying in ${delayMs}ms...`
+            );
+            await sleep(delayMs);
+        }
+    }
+
+    throw lastError;
 }
 
 async function main(): Promise<void> {
@@ -110,7 +144,19 @@ async function main(): Promise<void> {
         symbol,
         uri: metadataUri,
         sellerFeeBasisPoints: percentAmount(sellerFeePercent),
-        isMutable: true
+        isMutable: true,
+        creators: some([
+            {
+                address: publicKey(config.creatorWallet),
+                verified: config.creatorWallet === String(umi.identity.publicKey),
+                share: config.creatorRoyaltyShare
+            },
+            {
+                address: publicKey(config.studentWallet),
+                verified: false,
+                share: config.studentRoyaltyShare
+            }
+        ])
     };
 
     if (collectionMintAddress) {
@@ -145,6 +191,27 @@ async function main(): Promise<void> {
             });
 
             const collectionMint = publicKey(collectionMintAddress);
+            const collectionAuthorityRecord = findCollectionAuthorityRecordPda(umi, {
+                mint: collectionMint,
+                collectionAuthority: umi.identity.publicKey
+            });
+
+            const existingAuthorityRecord = await safeFetchCollectionAuthorityRecord(
+                umi,
+                collectionAuthorityRecord
+            );
+
+            if (!existingAuthorityRecord) {
+                console.error("[Solana] Creating collection authority record...");
+
+                await approveCollectionAuthority(umi, {
+                    collectionAuthorityRecord,
+                    newCollectionAuthority: umi.identity.publicKey,
+                    updateAuthority: umi.identity,
+                    payer: umi.identity,
+                    mint: collectionMint
+                }).sendAndConfirm(umi);
+            }
 
             const collectionMetadata = findMetadataPda(umi, {
                 mint: collectionMint
@@ -154,14 +221,17 @@ async function main(): Promise<void> {
                 mint: collectionMint
             });
 
-            const verifyResult = await verifySizedCollectionItem(umi, {
-                metadata,
-                collectionAuthority: umi.identity,
-                payer: umi.identity,
-                collectionMint,
-                collection: collectionMetadata,
-                collectionMasterEditionAccount: collectionMasterEdition
-            }).sendAndConfirm(umi);
+            const verifyResult = await retryCollectionVerification(() =>
+                verifySizedCollectionItem(umi, {
+                    metadata,
+                    collectionAuthority: umi.identity,
+                    payer: umi.identity,
+                    collectionMint,
+                    collection: collectionMetadata,
+                    collectionMasterEditionAccount: collectionMasterEdition,
+                    collectionAuthorityRecord
+                }).sendAndConfirm(umi)
+            );
 
             verificationSignature = bs58.encode(verifyResult.signature);
 

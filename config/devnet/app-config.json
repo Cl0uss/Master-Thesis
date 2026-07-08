@@ -1,10 +1,13 @@
 {
   "appName": "Master-Thesis-Devnet",
   "creatorWallet": "DXuExAoMpdKvYPKizMAJUm8uRvrtUTaYTkyjw698P1AC",
+  "studentWallet": "5ajD9h5dx52yGkXeCKJ6hmjsS4W7UrcPdPtULxryT2eu",
   "walletPath": "/home/cl0us/Desktop/thesis-wallet/thesis-wallet-devnet.json",
   "secondWallet": "DXuExAoMpdKvYPKizMAJUm8uRvrtUTaYTkyjw698P1AC",
   "symbol": "TMDC",
   "sellerFeePercent": 5,
+  "creatorRoyaltyShare": 80,
+  "studentRoyaltyShare": 20,
   "network": "devnet",
   "rawFilesDirectory": "rawFiles",
   "metadataDirectory": "metadata",

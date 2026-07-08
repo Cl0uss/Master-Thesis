@@ -394,7 +394,7 @@ Used for:
 ```text
 baseline ownership model
 NFT transfer demo
-simple token-gated access
+simple proof-of-concept token-gated access
 proof of ownership-based content rights
 ```
 
@@ -458,7 +458,7 @@ Standard NFT = baseline proof-of-ownership access model
 Compressed NFT = scalable distribution model for many transmedia assets
 Irys / Arweave = decentralized content and metadata storage
 Solana = ownership and access-control layer
-Backend = verifier that checks blockchain ownership before serving protected content
+Backend = proof-of-concept verifier that checks blockchain ownership before serving protected content
 ```
 
 ---
@@ -483,14 +483,15 @@ cNFT token-gated access
 UI for standard NFT flow
 UI for cNFT flow
 Devnet / Mainnet config separation
-RPC secrets excluded from Git
+RPC secrets kept local to the demo environment
+Royalty split encoded as 5% total seller fee with 80/20 creator shares
+Standard NFT collection verification enforced by the Java pipeline
 ```
 
 Remaining technical improvements:
 
 ```text
-Fix standard NFT Devnet collection verification
-Add final metadata hierarchy fields
+Add optional wallet signature authentication before ownership checks
 Improve UI result cards and copy buttons
 Add final thesis screenshots
 ```

@@ -29,8 +29,7 @@ public class NftMinter {
                 rpcUrl,
                 String.valueOf(sellerFeePercent),
                 "--network",
-                network,
-                "--allow-unverified-collection"
+                network
         );
 
         Process process = processBuilder.start();

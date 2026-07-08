@@ -16,8 +16,11 @@ public class MetadataJsonWriter {
             long fileSize,
             String sha256,
             String creatorWallet,
+            String studentWallet,
             String symbol,
             int sellerFeePercent,
+            int creatorRoyaltyShare,
+            int studentRoyaltyShare,
             String description
     ) throws Exception {
 
@@ -28,6 +31,7 @@ public class MetadataJsonWriter {
         String safeMimeType = escapeJson(mimeType);
         String safeSha256 = escapeJson(sha256);
         String safeCreatorWallet = escapeJson(creatorWallet);
+        String safeStudentWallet = escapeJson(studentWallet);
         String safeSymbol = escapeJson(symbol);
         String safeDescription = escapeJson(description);
 
@@ -138,7 +142,11 @@ public class MetadataJsonWriter {
                     "creators": [
                       {
                         "address": "%s",
-                        "share": 100
+                        "share": %d
+                      },
+                      {
+                        "address": "%s",
+                        "share": %d
                       }
                     ]
                   }
@@ -175,7 +183,10 @@ public class MetadataJsonWriter {
                 escapeJson(blockchainLayer),
                 safeAssetUri,
                 safeMimeType,
-                safeCreatorWallet
+                safeCreatorWallet,
+                creatorRoyaltyShare,
+                safeStudentWallet,
+                studentRoyaltyShare
         );
 
         // Persist metadata locally so it can be inspected and uploaded to Irys.

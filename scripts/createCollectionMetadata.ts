@@ -82,7 +82,11 @@ export async function createCollectionMetadata(): Promise<string> {
             creators: [
                 {
                     address: config.creatorWallet,
-                    share: 100
+                    share: config.creatorRoyaltyShare
+                },
+                {
+                    address: config.studentWallet,
+                    share: config.studentRoyaltyShare
                 }
             ]
         }

@@ -6,10 +6,13 @@ export type Network = "mainnet" | "devnet";
 export type AppConfig = {
     appName: string;
     creatorWallet: string;
+    studentWallet: string;
     walletPath: string;
     secondWallet: string;
     symbol: string;
     sellerFeePercent: number;
+    creatorRoyaltyShare: number;
+    studentRoyaltyShare: number;
     network: string;
     rawFilesDirectory: string;
     metadataDirectory: string;

@@ -142,8 +142,11 @@ public class Main {
                 fileSize,
                 sha256,
                 config.creatorWallet(),
+                config.studentWallet(),
                 config.symbol(),
                 config.sellerFeePercent(),
+                config.creatorRoyaltyShare(),
+                config.studentRoyaltyShare(),
                 config.metadataDescription()
         );
 

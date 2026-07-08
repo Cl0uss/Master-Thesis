@@ -9,10 +9,13 @@ public class AppConfig {
 
     private final String appName;
     private final String creatorWallet;
+    private final String studentWallet;
     private final Path walletPath;
     private final String secondWallet;
     private final String symbol;
     private final int sellerFeePercent;
+    private final int creatorRoyaltyShare;
+    private final int studentRoyaltyShare;
     private final String network;
     private final Path rawFilesDirectory;
     private final Path metadataDirectory;
@@ -28,10 +31,13 @@ public class AppConfig {
     private AppConfig(
             String appName,
             String creatorWallet,
+            String studentWallet,
             Path walletPath,
             String secondWallet,
             String symbol,
             int sellerFeePercent,
+            int creatorRoyaltyShare,
+            int studentRoyaltyShare,
             String network,
             Path rawFilesDirectory,
             Path metadataDirectory,
@@ -46,10 +52,13 @@ public class AppConfig {
     ) {
         this.appName = appName;
         this.creatorWallet = creatorWallet;
+        this.studentWallet = studentWallet;
         this.walletPath = walletPath;
         this.secondWallet = secondWallet;
         this.symbol = symbol;
         this.sellerFeePercent = sellerFeePercent;
+        this.creatorRoyaltyShare = creatorRoyaltyShare;
+        this.studentRoyaltyShare = studentRoyaltyShare;
         this.network = network;
         this.rawFilesDirectory = rawFilesDirectory;
         this.metadataDirectory = metadataDirectory;
@@ -70,10 +79,13 @@ public class AppConfig {
 
         String appName = extractString(json, "appName");
         String creatorWallet = extractString(json, "creatorWallet");
+        String studentWallet = extractString(json, "studentWallet");
         Path walletPath = Paths.get(extractString(json, "walletPath"));
         String secondWallet = extractString(json, "secondWallet");
         String symbol = extractString(json, "symbol");
         int sellerFeePercent = extractInt(json, "sellerFeePercent");
+        int creatorRoyaltyShare = extractInt(json, "creatorRoyaltyShare");
+        int studentRoyaltyShare = extractInt(json, "studentRoyaltyShare");
         String network = extractString(json, "network");
         String coverExtension = extractString(json, "coverExtension");
         String nftNameTemplate = extractString(json, "nftNameTemplate");
@@ -95,10 +107,13 @@ public class AppConfig {
         return new AppConfig(
                 appName,
                 creatorWallet,
+                studentWallet,
                 walletPath,
                 secondWallet,
                 symbol,
                 sellerFeePercent,
+                creatorRoyaltyShare,
+                studentRoyaltyShare,
                 network,
                 rawFilesDirectory,
                 metadataDirectory,
@@ -169,6 +184,10 @@ public class AppConfig {
         return creatorWallet;
     }
 
+    public String studentWallet() {
+        return studentWallet;
+    }
+
     public Path walletPath() {
         return walletPath;
     }
@@ -183,6 +202,14 @@ public class AppConfig {
 
     public int sellerFeePercent() {
         return sellerFeePercent;
+    }
+
+    public int creatorRoyaltyShare() {
+        return creatorRoyaltyShare;
+    }
+
+    public int studentRoyaltyShare() {
+        return studentRoyaltyShare;
     }
 
     public String network() {

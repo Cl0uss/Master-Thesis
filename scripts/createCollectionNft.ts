@@ -12,7 +12,9 @@ import {
     createSignerFromKeypair,
     generateSigner,
     keypairIdentity,
-    percentAmount
+    percentAmount,
+    publicKey,
+    some
 } from "@metaplex-foundation/umi";
 
 import {
@@ -63,7 +65,19 @@ async function main(): Promise<void> {
         uri: collectionUri,
         sellerFeeBasisPoints: percentAmount(config.sellerFeePercent),
         isCollection: true,
-        isMutable: true
+        isMutable: true,
+        creators: some([
+            {
+                address: publicKey(config.creatorWallet),
+                verified: config.creatorWallet === String(umi.identity.publicKey),
+                share: config.creatorRoyaltyShare
+            },
+            {
+                address: publicKey(config.studentWallet),
+                verified: false,
+                share: config.studentRoyaltyShare
+            }
+        ])
     }).sendAndConfirm(umi);
 
     const signature = bs58.encode(result.signature);

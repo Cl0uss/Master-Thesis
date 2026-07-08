@@ -388,7 +388,7 @@ npx tsx scripts/transferNft.ts \
 
 ## Standard NFT Token-Gated Access
 
-The backend verifies ownership before returning protected content.
+The backend verifies ownership before returning protected content. This is a proof-of-concept verifier: the demo request submits a public wallet address, and the backend checks whether that address owns the required NFT. A production version should first authenticate the wallet with a signed nonce, then run the same ownership check.
 
 API endpoint:
 
@@ -412,6 +412,8 @@ Protected content endpoint:
 ```text
 POST /api/protected/content
 ```
+
+Standard NFT minting assigns the NFT to the configured collection and verifies that collection by default. The Java launcher no longer allows unverified collection minting silently; if collection verification fails, the mint command fails so the demo does not present an unverified NFT as part of the official collection.
 
 ---
 
@@ -784,6 +786,8 @@ rawFiles/covers/lecture.png
 
 ## Security
 
+Additional notes are documented in [docs/security.md](docs/security.md).
+
 Do not publish:
 
 ```text
@@ -825,14 +829,15 @@ compressed NFT ownership check through Helius DAS
 compressed NFT token-gated access
 local UI for standard NFT and cNFT flows
 Devnet / Mainnet config separation
-RPC secrets excluded from Git
+RPC secrets kept local to the demo environment
+royalty split encoded as 5% total seller fee with 80/20 creator shares
+standard NFT collection verification enforced by the Java pipeline
 ```
 
 Remaining improvements:
 
 ```text
-fix standard NFT Devnet collection verification
-add final metadata hierarchy fields
+add optional wallet signature authentication before ownership checks
 add UI copy buttons
 add final thesis screenshots
 polish final thesis demo scenario
