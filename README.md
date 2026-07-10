@@ -840,9 +840,7 @@ rawFiles/covers/lecture.png
 
 ## Security
 
-Additional notes are documented in [docs/security.md](docs/security.md).
-
-Do not publish:
+Keep local credentials and wallet files outside version control. Do not publish:
 
 ```text
 config/mainnet/rpc-config.json
