@@ -26,7 +26,7 @@ public class MetadataJsonWriter {
 
         String safeFileName = escapeJson(fileName);
         String safeAssetUri = escapeJson(assetUri);
-        String safeCoverUri = escapeJson(coverUri);
+        String safeCoverUri = escapeJson(coverUri == null || coverUri.isBlank() ? assetUri : coverUri);
         String safeCategory = escapeJson(category);
         String safeMimeType = escapeJson(mimeType);
         String safeSha256 = escapeJson(sha256);
@@ -45,7 +45,9 @@ public class MetadataJsonWriter {
         String distributionModel = "Transmedia Digital Content";
         String assetStandard = "Standard NFT / cNFT compatible metadata";
 
-        // Choose metadata media fields based on whether the asset needs a cover image.
+        // Choose metadata media fields based on media type. Audio and document
+        // assets keep the original file in animation_url and may use either an
+        // optional cover URI or the asset URI itself as the image field.
         String mediaFields;
 
         if (category.equals("audio") || category.equals("document")) {

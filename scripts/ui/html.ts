@@ -233,6 +233,10 @@ export function getHtml(): string {
       line-height: 1.45;
     }
 
+    .hidden {
+      display: none !important;
+    }
+
     input[type="text"],
     input[type="file"] {
       width: 100%;
@@ -512,18 +516,31 @@ export function getHtml(): string {
             </div>
 
             <div class="field">
-              <label for="walletFile">Wallet JSON</label>
+              <label id="walletFileLabel" for="walletFile">Wallet JSON</label>
               <input id="walletFile" type="file" accept="application/json,.json" />
-              <div class="hint">Optional wallet file. If empty, config wallet is used.</div>
+              <div id="walletFileHint" class="hint">Optional wallet file. If empty, config wallet is used.</div>
+            </div>
+
+            <div id="storageWalletField" class="field hidden">
+              <label for="storageWalletFile">Irys Storage Wallet JSON</label>
+              <input id="storageWalletFile" type="file" accept="application/json,.json" />
+              <div class="hint">Optional. If empty, the funded storage wallet from mainnet config is used for Irys uploads.</div>
             </div>
 
             <label class="checkbox-row">
               <input id="mint" type="checkbox" />
-              <span>Mint NFT after upload and metadata generation</span>
+              <span>Mint standard NFT after upload and metadata generation</span>
             </label>
 
+            <label class="checkbox-row">
+              <input id="mintCompressedNft" type="checkbox" />
+              <span>Mint compressed NFT into the configured collection</span>
+            </label>
+            <div class="hint">If config/&lt;network&gt;/cnft-config.json is missing, the pipeline creates a Merkle Tree automatically using the selected wallet.</div>
+
             <div class="button-row">
-              <button type="submit">Run Standard Pipeline</button>
+              <button id="runPipelineButton" type="submit">Run Standard Pipeline</button>
+              <button id="runPipelineDevnetButton" class="secondary hidden" type="button">Run Standard Pipeline Devnet</button>
             </div>
           </form>
         </div>
@@ -531,10 +548,10 @@ export function getHtml(): string {
 
       <div class="panel">
         <div class="panel-header">
-          <p class="panel-kicker">Devnet Pipeline</p>
-          <h2>Compressed NFT Testing</h2>
+          <p class="panel-kicker">Compressed NFT Pipeline</p>
+          <h2>cNFT Minting</h2>
           <p class="panel-description">
-            Create Merkle Tree, create Devnet collection, and mint compressed NFTs.
+            Create a Merkle Tree and mint compressed NFTs on the selected network.
           </p>
         </div>
 
@@ -547,14 +564,14 @@ export function getHtml(): string {
               </div>
 
               <div class="mini-card">
-                <strong>Devnet Collection</strong>
-                <span>Test collection for compressed NFT verification.</span>
+                <strong>Configured Collection</strong>
+                <span>Collection used for compressed NFT verification.</span>
               </div>
             </div>
 
             <div class="button-row">
               <button id="createTreeButton" class="secondary">Create Merkle Tree</button>
-              <button id="createDevnetCollectionButton" class="secondary">Create Devnet Collection</button>
+              <button id="createDevnetCollectionButton" class="secondary">Create Collection</button>
             </div>
 
             <div class="field">
@@ -746,6 +763,7 @@ export function getHtml(): string {
 
     let lastGrantedAccess = null;
     let lastGrantedCnftAccess = null;
+    let currentNetwork = '';
 
     function setLog(text) {
       logNode.textContent = text;
@@ -764,6 +782,41 @@ export function getHtml(): string {
       document.querySelectorAll('button').forEach(function(button) {
         button.disabled = disabled;
       });
+    }
+
+    async function configureNetworkUi() {
+      try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+
+        currentNetwork = config.network || '';
+
+        const isDevnet = currentNetwork === 'devnet';
+        const isMainnet = currentNetwork === 'mainnet';
+
+        document.querySelector('#runPipelineDevnetButton').classList.add('hidden');
+        document.querySelector('#storageWalletField').classList.toggle('hidden', !isDevnet);
+
+        if (isDevnet) {
+          document.querySelector('#walletFileLabel').textContent = 'Solana Devnet Wallet JSON';
+          document.querySelector('#walletFileHint').textContent = 'Used for Devnet standard NFT minting, Merkle Tree creation, and cNFT minting.';
+          document.querySelector('#runPipelineButton').textContent = 'Run Standard Pipeline Devnet';
+          setState('Devnet');
+          return;
+        }
+
+        if (isMainnet) {
+          document.querySelector('#walletFileLabel').textContent = 'Wallet JSON';
+          document.querySelector('#walletFileHint').textContent = 'Used for Irys upload, standard NFT minting, Merkle Tree creation, and cNFT minting on Mainnet.';
+          document.querySelector('#runPipelineButton').textContent = 'Run Standard Pipeline';
+          setState('Mainnet');
+          return;
+        }
+
+        setState('Ready');
+      } catch (error) {
+        setState('Config unavailable');
+      }
     }
 
     function escapeHtml(value) {
@@ -1175,13 +1228,13 @@ export function getHtml(): string {
       }
     }
 
-    document.querySelector('#pipelineForm').addEventListener('submit', async function(event) {
-      event.preventDefault();
-
+    async function runStandardPipeline(targetNetwork) {
       const assetFile = document.querySelector('#assetFile').files[0];
       const coverFile = document.querySelector('#coverFile').files[0];
       const walletFile = document.querySelector('#walletFile').files[0];
+      const storageWalletFile = document.querySelector('#storageWalletFile').files[0];
       const mint = document.querySelector('#mint').checked;
+      const mintCompressedNft = document.querySelector('#mintCompressedNft').checked;
 
       if (!assetFile) {
         setLog('Please choose an asset file.');
@@ -1190,7 +1243,7 @@ export function getHtml(): string {
 
       setButtonsDisabled(true);
       setState('Uploading');
-      setLog('Uploading asset...\\n');
+      setLog('Uploading asset for ' + (targetNetwork || 'current network') + '...\\n');
 
       try {
         const assetUpload = await uploadFile('asset', assetFile);
@@ -1205,6 +1258,7 @@ export function getHtml(): string {
         }
 
         let walletPath = '';
+        let storageWalletPath = '';
 
         if (walletFile) {
           appendLog('Uploading wallet...\\n');
@@ -1213,14 +1267,28 @@ export function getHtml(): string {
           appendLog('Wallet saved: ' + walletUpload.path + '\\n');
         }
 
-        appendLog('\\nStarting standard NFT pipeline...\\n\\n');
+        if (currentNetwork === 'devnet' && storageWalletFile) {
+          appendLog('Uploading Irys storage wallet...\\n');
+          const storageWalletUpload = await uploadFile('wallet', storageWalletFile);
+          storageWalletPath = storageWalletUpload.path;
+          appendLog('Irys storage wallet saved: ' + storageWalletUpload.path + '\\n');
+        }
+
+        if (currentNetwork === 'mainnet' && walletPath) {
+          storageWalletPath = walletPath;
+        }
+
+        appendLog('\\nStarting standard NFT pipeline' + (targetNetwork ? ' on ' + targetNetwork : '') + '...\\n\\n');
 
         setButtonsDisabled(false);
 
         await streamCommand('/api/run', {
           filename: assetUpload.filename,
           walletPath: walletPath,
-          mint: mint
+          storageWalletPath: storageWalletPath,
+          mint: mint,
+          mintCompressedNft: mintCompressedNft,
+          network: targetNetwork || ''
         });
       } catch (error) {
         setState('Error');
@@ -1228,6 +1296,15 @@ export function getHtml(): string {
       } finally {
         setButtonsDisabled(false);
       }
+    }
+
+    document.querySelector('#pipelineForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      await runStandardPipeline('');
+    });
+
+    document.querySelector('#runPipelineDevnetButton').addEventListener('click', async function() {
+      await runStandardPipeline('devnet');
     });
 
     document.querySelector('#createTreeButton').addEventListener('click', function() {
@@ -1365,6 +1442,8 @@ export function getHtml(): string {
         setButtonsDisabled(false);
       }
     });
+
+    configureNetworkUi();
   </script>
 </body>
 </html>`;

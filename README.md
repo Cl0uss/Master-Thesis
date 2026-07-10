@@ -57,7 +57,7 @@ Simplified architecture:
 ```text
 Digital asset
 ↓
-Irys / Arweave upload
+Irys upload
 ↓
 Metadata generation
 ↓
@@ -230,13 +230,15 @@ Supported formats:
 | Audio     | `.mp3`, `.wav`                   |
 | Documents | `.pdf`                           |
 
-Audio and PDF files require a cover image located in:
+Audio and PDF files can optionally use a cover image located in:
 
 ```text
 rawFiles/covers/
 ```
 
-The cover image must have the same base filename as the original asset.
+The cover image must have the same base filename as the original asset. If no
+cover image is present, the pipeline continues and uses the uploaded asset URI
+as the metadata image field.
 
 Example:
 
@@ -256,12 +258,16 @@ Start the UI on Mainnet config:
 
 ```bash
 npm run ui:mainnet
+# or
+./ui.sh
 ```
 
 Start the UI on Devnet config:
 
 ```bash
 npm run ui:devnet
+# or
+./ui.sh --dev-net
 ```
 
 Default UI address:
@@ -287,18 +293,25 @@ The web interface supports:
 
 ```text
 asset upload
-wallet JSON upload
-cover image upload
-standard NFT pipeline
+Mainnet wallet JSON upload
+Devnet mint wallet JSON upload
+Devnet Irys storage wallet JSON upload
+optional cover image upload
+standard pipeline on the selected network
 standard NFT transfer
 standard NFT access check
 Merkle Tree creation
-Devnet collection creation
+network collection creation
 cNFT mint
 cNFT mint into collection
 cNFT access check
 protected content display
 ```
+
+In Mainnet mode the UI shows one wallet input, used for Solana minting and
+storage unless a configured storage wallet is used by the command. In Devnet
+mode the UI shows two wallet inputs: one Devnet wallet for Solana minting and
+Merkle Tree ownership, and one funded storage wallet for Irys uploads.
 
 ---
 
@@ -336,11 +349,47 @@ Run standard pipeline with minting:
 ./launch <filename> --mint --network devnet
 ```
 
+Run the main pipeline and mint a compressed NFT into the configured collection:
+
+```bash
+./launch <filename> --mint-cnft --network mainnet
+```
+
+Run the full main pipeline with both a standard NFT and a compressed NFT:
+
+```bash
+./launch <filename> --mint-all --network mainnet
+```
+
+Compressed NFT minting requires a Merkle Tree config for the selected network:
+
+```text
+config/<network>/cnft-config.json
+```
+
+When `--mint-cnft` or `--mint-all` is used, the main pipeline creates this Merkle Tree automatically if it is missing. The tree is created with the same wallet used for minting, so the wallet can act as the tree creator/delegate.
+
 Use a custom wallet:
 
 ```bash
-./launch <filename> --wallet path/to/wallet.json --mint --network devnet
+./launch <filename> --wallet path/to/wallet.json --mint-all --network mainnet
 ```
+
+`--wallet` controls Solana minting and cNFT tree ownership. Irys uploads stay on the funded storage wallet from `config/mainnet/app-config.json` unless a separate storage wallet is explicitly provided:
+
+```bash
+./launch <filename> --wallet path/to/devnet-wallet.json --storage-wallet path/to/funded-storage-wallet.json --mint-all --network devnet
+```
+
+After a successful run, the pipeline writes a links report:
+
+```text
+out/pipeline-links/latest-links.txt
+out/pipeline-links/<timestamp>-<network>-<asset>-links.txt
+```
+
+The report includes Irys asset and metadata URIs, NFT and cNFT addresses,
+transactions, explorer links, Merkle Tree details, network, and wallet paths.
 
 ---
 
@@ -465,18 +514,18 @@ config/devnet/cnft-config.json
 
 ---
 
-## Create Devnet Collection
+## Create Collection
 
-Create a Devnet collection NFT for cNFT testing:
+Create a collection NFT for the selected network if a collection is not already configured:
 
 ```bash
-npx tsx scripts/createDevnetCollectionNft.ts --network devnet
+npx tsx scripts/createDevnetCollectionNft.ts --network mainnet
 ```
 
 The collection address is stored in:
 
 ```text
-config/devnet/collection-config.json
+config/<network>/collection-config.json
 ```
 
 ---
@@ -640,7 +689,7 @@ rawFiles/
     Source media files
 
 rawFiles/covers/
-    Cover images
+    Optional cover images
 
 scripts/
     TypeScript scripts and utilities
@@ -650,6 +699,9 @@ scripts/ui/
 
 src/
     Java launcher application
+
+out/pipeline-links/
+    Successful pipeline link reports
 
 .runtime/
     Temporary runtime files and uploaded wallets
@@ -771,9 +823,11 @@ npx tsx scripts/checkCompressedNftOwner.ts <assetId> <walletAddress> --network d
 
 ---
 
-### Missing Cover Image
+### Optional Cover Image
 
-Audio and PDF assets require a cover image.
+Audio and PDF assets can use a cover image, but it is not required. If no cover
+image is found, the pipeline continues and uses the uploaded asset URI as the
+metadata image field.
 
 Example:
 
@@ -829,6 +883,8 @@ compressed NFT ownership check through Helius DAS
 compressed NFT token-gated access
 local UI for standard NFT and cNFT flows
 Devnet / Mainnet config separation
+Devnet two-wallet flow for Solana minting and Irys storage
+automatic links report generation after successful pipeline runs
 RPC secrets kept local to the demo environment
 royalty split encoded as 5% total seller fee with 80/20 creator shares
 standard NFT collection verification enforced by the Java pipeline

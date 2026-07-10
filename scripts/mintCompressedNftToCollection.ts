@@ -153,16 +153,19 @@ async function main(): Promise<void> {
     const appConfig = loadAppConfig(network);
     const name = positionalArgs[1] ?? "Compressed NFT";
     const symbol = positionalArgs[2] ?? appConfig.symbol;
+    const walletPathArg = positionalArgs[3];
 
     if (!metadataUri) {
         console.error(
-            "Usage: npx tsx scripts/mintCompressedNftToCollection.ts <metadataUri> [name] [symbol] [--network devnet|mainnet]"
+            "Usage: npx tsx scripts/mintCompressedNftToCollection.ts <metadataUri> [name] [symbol] [walletPath] [--network devnet|mainnet]"
         );
         process.exit(1);
     }
 
     const rpcUrl = loadRpcConfig(network).rpcUrl;
-    const walletPath = resolveConfigPath(appConfig.walletPath);
+    const walletPath = walletPathArg
+        ? resolveConfigPath(walletPathArg)
+        : resolveConfigPath(appConfig.walletPath);
 
     const cnftConfig = loadCnftConfig(network);
     const collectionConfig = loadCollectionConfig(network);

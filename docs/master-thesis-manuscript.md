@@ -19,9 +19,7 @@ This page is reserved for the official final mark form included in the annex pro
 
 1. First Page: Final Mark Form  
 2. Index  
-3. Summary  
-   3.1. Resumen en espanol  
-   3.2. Summary in English  
+3. Abstract  
 4. Body of the Master's Thesis  
    4.1. Introduction  
    4.2. State of the Art  
@@ -33,19 +31,9 @@ This page is reserved for the official final mark form included in the annex pro
 
 ---
 
-# 3. Summary
+# 3. Abstract
 
-## 3.1. Resumen en espanol
-
-Este Trabajo Fin de Master presenta un marco basado en blockchain para la distribucion de contenido digital transmedia mediante NFTs y NFTs comprimidos en Solana, junto con almacenamiento descentralizado en Irys/Arweave. El objetivo principal es demostrar como diferentes tipos de activos digitales, como libros, imagenes y musica, pueden publicarse como elementos verificables, transferibles y utilizables como claves de acceso a contenido protegido.
-
-El prototipo desarrollado automatiza el flujo completo de publicacion: preparacion del archivo, calculo de integridad mediante SHA-256, generacion de metadatos compatibles con Metaplex, subida del activo y de los metadatos a Irys, creacion de NFTs estandar, creacion de arboles Merkle para NFTs comprimidos, minteo de cNFTs dentro de una coleccion y verificacion de propiedad mediante RPC y Helius DAS. Tambien se implementa una interfaz web local para ejecutar los procesos principales y probar el acceso condicionado por propiedad.
-
-La solucion diferencia entre NFTs estandar, adecuados para activos principales como el libro o paquetes de alto valor, y NFTs comprimidos, adecuados para colecciones grandes de imagenes, canciones o fragmentos transmedia. Los experimentos en Devnet validan el minteo, la verificacion de coleccion, la transferencia de propiedad y el control de acceso basado en la posesion del NFT o cNFT. El resultado es una prueba de concepto funcional que demuestra la viabilidad tecnica de usar Solana como capa de propiedad y verificacion para la distribucion programable de contenido digital.
-
-## 3.2. Summary in English
-
-This Master's Thesis presents a blockchain-based framework for transmedia digital content distribution using Solana NFTs, compressed NFTs, and decentralized storage through Irys/Arweave. The main objective is to demonstrate how different digital assets, such as books, images, and music, can be published as verifiable and transferable blockchain assets that also act as access keys for protected content.
+This Master's Thesis presents a blockchain-based framework for transmedia digital content distribution using Solana NFTs, compressed NFTs, and decentralized storage through Irys. The main objective is to demonstrate how different digital assets, such as books, images, and music, can be published as verifiable and transferable blockchain assets that also act as access keys for protected content.
 
 The implemented prototype automates the full publication workflow: source asset preparation, SHA-256 integrity calculation, Metaplex-compatible metadata generation, asset and metadata upload to Irys, standard NFT minting, Merkle tree creation for compressed NFTs, cNFT minting into a collection, and ownership verification through Solana RPC and Helius DAS. A local web interface is also provided to execute the main flows and test token-gated access.
 
@@ -63,7 +51,7 @@ Transmedia projects amplify this problem because they are not limited to one fil
 
 Blockchain technology offers a possible alternative by representing digital ownership through tokens. In particular, non-fungible tokens can provide a public and verifiable record of ownership for unique or semi-unique digital assets. However, blockchain systems should not store large media files directly on-chain because this is inefficient and expensive. A practical architecture therefore needs to combine on-chain ownership with decentralized off-chain storage.
 
-This thesis explores such a hybrid approach using Solana as the blockchain layer, Metaplex metadata conventions for NFT representation, compressed NFTs for scalable distribution, and Irys/Arweave for decentralized storage. The proposed framework is designed for a manageable thesis scope: a book, images, and music files grouped under a single collection and distributed through standard NFTs and compressed NFTs.
+This thesis explores such a hybrid approach using Solana as the blockchain layer, Metaplex metadata conventions for NFT representation, compressed NFTs for scalable distribution, and Irys for decentralized storage. The proposed framework is designed for a manageable thesis scope: a book, images, and music files grouped under a single collection and distributed through standard NFTs and compressed NFTs.
 
 The main research question is:
 
@@ -99,9 +87,9 @@ Metaplex provides widely used conventions and programs for NFTs on Solana. A typ
 
 This separation between on-chain ownership and off-chain metadata is central to the architecture of this thesis. The blockchain proves ownership, while the metadata describes the asset and links to decentralized storage.
 
-### Decentralized Storage: Arweave and Irys
+### Decentralized Storage: Irys
 
-Large media files are not stored directly on-chain. Arweave provides persistent decentralized storage, and Irys acts as an upload and payment layer that can publish data to Arweave-compatible storage. In this project, both original assets and generated metadata JSON files are uploaded to Irys, and their gateway URLs are then used in NFT metadata.
+Large media files are not stored directly on-chain. In this project, both original assets and generated metadata JSON files are uploaded to Irys, and their gateway URLs are then used in NFT metadata.
 
 ### Compressed NFTs
 
@@ -164,23 +152,23 @@ The current royalty model uses a total seller fee of 5%, distributed through cre
 
 ### Decentralized Storage
 
-Original assets and metadata files are uploaded to Irys. The resulting gateway URLs are inserted into metadata or used directly by minting scripts. Audio and document files use a cover image for the metadata image field, while the original file is linked through `animation_url` or `external_url`.
+Original assets and metadata files are uploaded to Irys. The resulting gateway URLs are inserted into metadata or used directly by minting scripts. Audio and document files may use an optional cover image for the metadata image field, while the original file is linked through `animation_url` or `external_url`. If no cover image is supplied, the uploaded asset URI is reused as the metadata image field.
 
 ### Standard NFT Pipeline
 
-The standard NFT pipeline is executed through the `launch` script. It performs the following steps:
+The main asset pipeline is executed through the `launch` script. It can upload assets and metadata, mint a standard NFT with `--mint`, mint a compressed NFT into the configured collection with `--mint-cnft`, or perform both actions with `--mint-all`. It performs the following steps:
 
 1. Load the selected network configuration.
 2. Validate the input file.
 3. Detect MIME type and category.
 4. Calculate SHA-256 hash and file size.
 5. Upload the original asset to Irys.
-6. Upload a cover image if required.
+6. Upload a cover image if one is available.
 7. Generate metadata JSON.
 8. Upload metadata JSON to Irys.
 9. Mint a standard NFT when `--mint` is provided.
-10. Assign the NFT to the configured collection.
-11. Verify the collection on-chain.
+10. Assign and verify the standard NFT inside the configured collection.
+11. Create the Merkle Tree automatically if the selected network has no cNFT config, then mint a compressed NFT into the configured collection when `--mint-cnft` or `--mint-all` is provided.
 
 Collection verification uses a collection authority record and retry logic because newly created metadata may not be immediately available through the RPC path used by the verification instruction.
 
@@ -245,41 +233,61 @@ Result:
 
 ### Experiment 2: Standard NFT Minting and Collection Verification
 
-A standard NFT was minted on Devnet using an already uploaded metadata URI. The NFT was assigned to the configured collection and verified on-chain.
-
-Observed result:
+A standard NFT was minted on Devnet using an already uploaded metadata URI and then used for ownership, transfer, and token-gated access tests. The standard NFT mint address recorded in the verified demo flow was:
 
 ```text
-MINT_ADDRESS=A3E5ckqX8Y9rRwQ12H5FW2159kLtmc2wPDPqhKqsigYy
-TRANSACTION_SIGNATURE=57iukjivuAXeSTaJS8qvvKzhFtPX7AwHTcoAjWEQXP5e4iP9h1fAwxj8e6YRHwEuoJtFLbQuSc1pWqyYR8ZSYFuV
-COLLECTION_MINT_ADDRESS=UwFdA9sFvxuMjpJoa8oaEC4CnP5oCygtaLFLBhZYF51
-COLLECTION_VERIFICATION_SIGNATURE=5NnYLNdvdKiFdJMWcNcc6w14H8ZcCqX8qeMFmqkW5gxMy8L91LxTXDTcZ9yrwvJkRDZ9rjcxGKkoEeFPC6njTVaC
-COLLECTION_VERIFICATION_STATUS=verified
-NFT_MINT_STATUS=success
+Hc9WRxQkUKGhFAvrs12aJxtjLNrwJt6QyF7xXwTTUf5B
 ```
+
+The configured Devnet collection mint address was:
+
+```text
+UwFdA9sFvxuMjpJoa8oaEC4CnP5oCygtaLFLBhZYF51
+```
+
+The standard minting script assigns and verifies collection membership when a collection is configured.
 
 The experiment revealed that collection verification may fail immediately after minting because the fresh metadata state is not always ready for the verification instruction. This was solved by adding retry and backoff logic.
 
 ### Experiment 3: Standard NFT Ownership Check
 
-The ownership check script was executed against the newly minted NFT.
-
-Observed result:
+The ownership check script was executed against the minted NFT. The script locates the token account holding one unit of the NFT mint and reads its owner. In the verified Devnet demo, the original owner wallet was:
 
 ```text
-Mint: A3E5ckqX8Y9rRwQ12H5FW2159kLtmc2wPDPqhKqsigYy
-Owner: DXuExAoMpdKvYPKizMAJUm8uRvrtUTaYTkyjw698P1AC
+DXuExAoMpdKvYPKizMAJUm8uRvrtUTaYTkyjw698P1AC
 ```
 
-This confirms that the system can resolve the current NFT owner on Devnet.
+After transfer, the NFT owner used for positive access testing was:
+
+```text
+5ajD9h5dx52yGkXeCKJ6hmjsS4W7UrcPdPtULxryT2eu
+```
+
+This confirms that the system can determine the current NFT owner on Devnet.
 
 ### Experiment 4: Transfer and Access Change
 
-The standard NFT transfer flow demonstrates that access rights follow ownership. After transfer, the previous owner should lose access and the new owner should gain access. This validates the thesis concept that NFT ownership can act as a programmable access right.
+The standard NFT transfer flow demonstrates that access rights follow ownership. The NFT was transferred from the original owner wallet to the second test wallet.
+
+```text
+TRANSFER_TRANSACTION=4xuY63K1ukZ88UvEcszhq3t6VvAYaht8BHi6t6iMn2zVTwnjtCNpi3ikBjcfWPVAPAhyr8WuA3Ex3JvY7JC3Rhdy
+```
+
+After transfer, the previous owner was denied access and the new owner was granted access. This validates the thesis concept that NFT ownership can act as a programmable access right.
 
 ### Experiment 5: Compressed NFT Minting and Access Check
 
-A compressed NFT was minted into a collection and checked through Helius DAS. The DAS response provided the owner, compression status, Merkle tree, leaf index, and metadata URI. A positive ownership case returned access granted, while a different wallet returned access denied.
+A compressed NFT was minted into the Devnet collection and checked through Helius DAS.
+
+```text
+ASSET_ID=67vUJ3wSxfWRusp4Tshu53iovWMhg5nXQ9ECXrPpR9gs
+TRANSACTION_SIGNATURE=3UKGpFax9GRkh5gv217PtcagD82RbTLW5Ucbx6ghuhkXv656pA7M2XQhWoojGBPqUSQsUKLzD9n3U9mMKE6Bus4k
+MERKLE_TREE=9sAC54uk87BbXemuNCmhQMm9LEQBcQ1qsAxB4mzdKVj5
+LEAF_INDEX=3
+COLLECTION_MINT_ADDRESS=UwFdA9sFvxuMjpJoa8oaEC4CnP5oCygtaLFLBhZYF51
+```
+
+The DAS response provided the owner, compression status, Merkle tree, leaf index, and metadata URI. The owner wallet received access granted, while the second test wallet received access denied.
 
 ### Experiment Results Summary
 
@@ -322,7 +330,7 @@ The budget is divided into development costs, storage costs, and blockchain tran
 | --- | ---: |
 | Standard NFT minting for core assets | Low, depends on number of NFTs |
 | cNFT minting for images/songs | Very low per item |
-| Irys/Arweave storage uploads | Depends on file size |
+| Irys storage uploads | Depends on file size |
 | RPC provider | Free tier or paid plan depending on usage |
 | Total thesis-scope estimate | Approximately 5-10 EUR |
 
@@ -338,7 +346,6 @@ For a larger deployment with a book, multiple images, songs, bundles, and collec
 [2] Metaplex Documentation. Token Metadata and Bubblegum compressed NFT documentation.  
 [3] Irys Documentation. Decentralized data upload and storage documentation.  
 [4] Helius Documentation. DAS API documentation for compressed NFT indexing and ownership checks.  
-[5] Arweave Documentation. Permanent decentralized storage documentation.  
 
 ---
 
@@ -353,8 +360,9 @@ Insert the official final mark form provided by the university/supervisor.
 ```bash
 npm run typecheck
 javac -d /tmp/master-thesis-out $(find src -name "*.java")
-./launch pic.webp --mint --network devnet
-npx tsx scripts/checkNftOwner.ts A3E5ckqX8Y9rRwQ12H5FW2159kLtmc2wPDPqhKqsigYy --network devnet
+./launch pic.webp --wallet .runtime/wallets/thesis-wallet-devnet.json --storage-wallet .runtime/wallets/thesis-wallet.json --mint --mint-cnft --network devnet
+npx tsx scripts/checkNftOwner.ts Hc9WRxQkUKGhFAvrs12aJxtjLNrwJt6QyF7xXwTTUf5B --network devnet
+npx tsx scripts/checkCompressedNftOwner.ts 67vUJ3wSxfWRusp4Tshu53iovWMhg5nXQ9ECXrPpR9gs DXuExAoMpdKvYPKizMAJUm8uRvrtUTaYTkyjw698P1AC --network devnet
 ```
 
 ## Annex C: Repository Structure
@@ -366,4 +374,5 @@ metadata/                Generated NFT metadata JSON files
 src/                     Java pipeline implementation
 scripts/                 TypeScript Solana, Irys, cNFT, and UI scripts
 docs/                    Technical documentation and demo flow
+out/pipeline-links/      Generated link reports from successful pipeline runs
 ```

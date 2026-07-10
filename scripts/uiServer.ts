@@ -320,10 +320,18 @@ async function handleRun(
     const body = parseJsonBody(await readRequestBody(request));
     const filename = sanitizeFilename(getStringField(body, "filename"));
     const walletPath = getStringField(body, "walletPath");
+    const storageWalletPath = getStringField(body, "storageWalletPath");
+    const networkOverride = getStringField(body, "network").trim();
     const shouldMint = getBooleanField(body, "mint");
+    const shouldMintCompressedNft = getBooleanField(body, "mintCompressedNft");
 
     if (!filename) {
         sendJson(response, { error: "Missing filename." }, 400);
+        return;
+    }
+
+    if (networkOverride && networkOverride !== "devnet" && networkOverride !== "mainnet") {
+        sendJson(response, { error: `Unsupported network override: ${networkOverride}` }, 400);
         return;
     }
 
@@ -333,13 +341,23 @@ async function handleRun(
         args.push("--wallet", walletPath);
     }
 
+    if (storageWalletPath) {
+        args.push("--storage-wallet", storageWalletPath);
+    }
+
     if (shouldMint) {
         args.push("--mint");
     }
 
-    args.push("--network", network);
+    if (shouldMintCompressedNft) {
+        args.push("--mint-cnft");
+    }
 
-    runCommand(response, args, "Standard NFT pipeline", projectRoot);
+    const selectedNetwork = networkOverride || network;
+
+    args.push("--network", selectedNetwork);
+
+    runCommand(response, args, "Main pipeline", projectRoot);
 }
 
 async function handleCnftCommand(
@@ -648,7 +666,7 @@ async function requestListener(
                 request,
                 response,
                 "createDevnetCollectionNft.ts",
-                "Create Devnet Collection"
+                "Create Collection"
             );
             return;
         }

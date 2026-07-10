@@ -41,9 +41,9 @@ async function main(): Promise<void> {
     }
 
     console.log("[Collection] Network:", network);
-    console.log("[Devnet Collection] Using RPC:", rpcUrl);
-    console.log("[Devnet Collection] Using wallet:", walletPath);
-    console.log("[Devnet Collection] Metadata URI:", collectionUri);
+    console.log("[Collection] Using RPC:", rpcUrl);
+    console.log("[Collection] Using wallet:", walletPath);
+    console.log("[Collection] Metadata URI:", collectionUri);
 
     const umi = createUmi(rpcUrl).use(mplTokenMetadata());
 
@@ -58,7 +58,7 @@ async function main(): Promise<void> {
 
     const collectionMint = generateSigner(umi);
 
-    console.log("[Devnet Collection] Creating Collection NFT...");
+    console.log("[Collection] Creating Collection NFT...");
 
     const result = await createNft(umi, {
         mint: collectionMint,
@@ -103,7 +103,7 @@ async function main(): Promise<void> {
 
     fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
 
-    console.log("[Devnet Collection] Created successfully.");
+    console.log("[Collection] Created successfully.");
     console.log("Collection mint:", collectionMintAddress);
     console.log("Transaction:", signature);
     const clusterQuery = network === "devnet" ? "?cluster=devnet" : "";
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-    console.error("[Devnet Collection] Creation failed:");
+    console.error("[Collection] Creation failed:");
     console.error(error);
     process.exit(1);
 });

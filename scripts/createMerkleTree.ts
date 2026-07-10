@@ -14,15 +14,20 @@ import {
     getNetworkFromArgs,
     loadAppConfig,
     loadRpcConfig,
+    removeNetworkArgs,
     resolveConfigPath
 } from "./config.js";
 
 async function main(): Promise<void> {
 
-    const network = getNetworkFromArgs(process.argv.slice(2), "devnet");
+    const cliArgs = process.argv.slice(2);
+    const network = getNetworkFromArgs(cliArgs, "devnet");
+    const positionalArgs = removeNetworkArgs(cliArgs);
     const appConfig = loadAppConfig(network);
     const rpcUrl = loadRpcConfig(network).rpcUrl;
-    const walletPath = resolveConfigPath(appConfig.walletPath);
+    const walletPath = positionalArgs[0]
+        ? resolveConfigPath(positionalArgs[0])
+        : resolveConfigPath(appConfig.walletPath);
 
     console.log("[cNFT] Network:", network);
     console.log("[cNFT] Using RPC:", rpcUrl);

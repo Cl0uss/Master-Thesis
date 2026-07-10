@@ -5,8 +5,9 @@ set -eu
 cd -- "$(dirname -- "$0")"
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: ./launch [file-name] [--mint] [--network mainnet|devnet]"
+    echo "Usage: ./launch [file-name] [--mint] [--mint-cnft] [--mint-all] [--wallet path] [--storage-wallet path] [--network mainnet|devnet]"
     echo "Example: ./launch bonk.mp3"
+    echo "Example with standard NFT and cNFT on Mainnet: ./launch images.jpeg --mint-all --network mainnet"
     exit 1
 fi
 

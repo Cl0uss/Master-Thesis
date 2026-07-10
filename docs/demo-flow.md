@@ -456,7 +456,7 @@ Final concept:
 ```text
 Standard NFT = baseline proof-of-ownership access model
 Compressed NFT = scalable distribution model for many transmedia assets
-Irys / Arweave = decentralized content and metadata storage
+Irys = decentralized content and metadata storage
 Solana = ownership and access-control layer
 Backend = proof-of-concept verifier that checks blockchain ownership before serving protected content
 ```
@@ -475,6 +475,7 @@ Standard NFT transfer
 Standard NFT owner check
 Standard NFT token-gated access
 Merkle Tree creation
+Automatic Merkle Tree config creation from the main launcher
 cNFT mint
 cNFT mint into collection
 cNFT Asset ID discovery
@@ -482,16 +483,36 @@ cNFT owner check through Helius DAS
 cNFT token-gated access
 UI for standard NFT flow
 UI for cNFT flow
+UI network separation for Mainnet and Devnet
+Devnet two-wallet flow for Solana minting and Irys storage
+Optional cover images for audio and document assets
+Successful pipeline links report in out/pipeline-links
 Devnet / Mainnet config separation
 RPC secrets kept local to the demo environment
 Royalty split encoded as 5% total seller fee with 80/20 creator shares
 Standard NFT collection verification enforced by the Java pipeline
 ```
 
+Current end-to-end Devnet launcher example:
+
+```bash
+./launch <filename> \
+  --wallet .runtime/wallets/thesis-wallet-devnet.json \
+  --storage-wallet .runtime/wallets/thesis-wallet.json \
+  --mint \
+  --mint-cnft \
+  --network devnet
+```
+
+After a successful run, the generated links are saved in:
+
+```text
+out/pipeline-links/latest-links.txt
+```
+
 Remaining technical improvements:
 
 ```text
 Add optional wallet signature authentication before ownership checks
-Improve UI result cards and copy buttons
 Add final thesis screenshots
 ```
