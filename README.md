@@ -183,7 +183,6 @@ Example Mainnet RPC:
 https://mainnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
 ```
 
-Never commit real API keys to Git.
 
 ---
 
@@ -200,9 +199,6 @@ Merkle Tree creation
 collection creation
 ```
 
-Keep wallet files private.
-
-Never upload wallet JSON files to GitHub.
 
 Runtime wallet uploads are stored locally in:
 
@@ -210,7 +206,6 @@ Runtime wallet uploads are stored locally in:
 .runtime/wallets/
 ```
 
-This directory must not be committed.
 
 ---
 
@@ -267,7 +262,7 @@ Start the UI on Devnet config:
 ```bash
 npm run ui:devnet
 # or
-./ui.sh --dev-net
+./ui.sh --devnet
 ```
 
 Default UI address:
